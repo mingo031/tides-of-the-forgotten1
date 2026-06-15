@@ -1,0 +1,10 @@
+{
+ "appId": "com.mingo031.tides",
+  "appName": "Tides of the Forgotten",
+  "webDir": "www",
+  "backgroundColor": "#060d18",
+  "android": {
+    "backgroundColor": "#060d18",
+    "allowMixedContent": false
+  }
+}
