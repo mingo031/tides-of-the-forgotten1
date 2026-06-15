@@ -1,0 +1,2925 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="format-detection" content="telephone=no">
+<meta name="theme-color" content="#060d18">
+<title>Tides of the Forgotten</title>
+<style>
+  /* ============================================================
+     TIDES OF THE FORGOTTEN  —  design tokens
+     Sea: deep navy -> verdigris turquoise. Treasure: warm gold.
+     UI: aged sea-chart parchment with iron-gall ink.
+     ============================================================ */
+  :root{
+    --navy:#060d18;
+    --sea-deep:#08203b;
+    --sea-mid:#0e3a52;
+    --ink:#241606;
+    --ink-soft:#4a3417;
+    --parch-1:#ecdcb2;
+    --parch-2:#d8c084;
+    --parch-edge:#9a7635;
+    --gold:#f2cf6b;
+    --gold-deep:#b9852c;
+    --gold-glow:#ffe7a0;
+    --teal:#39d6c0;
+    --crimson:#9c3b2e;
+    --display: "Hoefler Text", "Georgia", "Times New Roman", serif;
+    --body: "Palatino Linotype", "Book Antiqua", Georgia, serif;
+    --mono: "Courier New", monospace;
+  }
+
+  *{ margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{
+    width:100%; height:100%; overflow:hidden;
+    background:var(--navy); color:#fff;
+    font-family:var(--body);
+    user-select:none; -webkit-user-select:none;
+    touch-action:none; overscroll-behavior:none; overscroll-behavior-y:contain;
+    -webkit-touch-callout:none; -webkit-tap-highlight-color:transparent;
+  }
+  #sea{ position:fixed; inset:0; display:block; touch-action:none; }
+
+  /* ---------- shared parchment panel ---------- */
+  .panel{
+    background:
+      radial-gradient(120% 140% at 20% 0%, var(--parch-1), var(--parch-2) 70%, #c6ac6f 100%);
+    color:var(--ink);
+    border:2px solid var(--parch-edge);
+    border-radius:10px;
+    box-shadow:
+      0 18px 50px rgba(0,0,0,.6),
+      inset 0 0 0 4px rgba(255,255,255,.18),
+      inset 0 0 60px rgba(122,90,30,.35);
+    position:relative;
+  }
+  .panel::after{
+    /* faint chart compass-rose watermark */
+    content:""; position:absolute; inset:0; border-radius:8px; pointer-events:none;
+    background:
+      repeating-linear-gradient(45deg, rgba(120,90,30,.04) 0 14px, transparent 14px 28px);
+    mix-blend-mode:multiply;
+  }
+
+  .title-line{
+    font-family:var(--display); font-weight:600;
+    letter-spacing:.06em; color:var(--ink);
+    text-shadow:0 1px 0 rgba(255,255,255,.35);
+  }
+
+  /* ---------- buttons ---------- */
+  .btn{
+    font-family:var(--display); font-size:clamp(15px,2.4vw,20px);
+    letter-spacing:.05em;
+    color:#2a1c08; cursor:pointer; border:none;
+    padding:14px 26px; min-height:54px; border-radius:8px;
+    background:linear-gradient(180deg,var(--gold-glow),var(--gold) 45%,var(--gold-deep));
+    box-shadow:0 4px 0 #7d5818, 0 8px 16px rgba(0,0,0,.45),
+               inset 0 1px 0 rgba(255,255,255,.6);
+    transition:transform .06s ease, box-shadow .06s ease, filter .15s;
+    touch-action:manipulation;
+  }
+  .btn:active{ transform:translateY(3px); box-shadow:0 1px 0 #7d5818, 0 3px 8px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.6); }
+  .btn.ghost{
+    background:linear-gradient(180deg, rgba(40,28,10,.85), rgba(20,14,5,.9));
+    color:var(--gold); border:1px solid var(--gold-deep);
+    box-shadow:0 4px 0 rgba(0,0,0,.5), inset 0 0 12px rgba(120,90,30,.4);
+  }
+  .btn.ghost:active{ transform:translateY(3px); box-shadow:0 1px 0 rgba(0,0,0,.5); }
+  .btn.small{ min-height:44px; padding:9px 16px; font-size:14px; }
+
+  /* ---------- top HUD ---------- */
+  #hud{ position:fixed; top:0; left:0; right:0; padding:10px 12px;
+        display:flex; align-items:center; gap:14px; pointer-events:none; z-index:20;
+        font-family:var(--display); }
+  .hud-chip{
+    display:flex; align-items:center; gap:8px; pointer-events:none;
+    background:linear-gradient(180deg, rgba(20,14,6,.78), rgba(8,5,2,.82));
+    border:1px solid var(--gold-deep); border-radius:30px;
+    padding:6px 14px 6px 8px; backdrop-filter:blur(3px);
+    box-shadow:0 4px 14px rgba(0,0,0,.5), inset 0 0 12px rgba(120,90,30,.25);
+  }
+  .coin{ width:24px; height:24px; border-radius:50%;
+         background:radial-gradient(circle at 35% 30%, var(--gold-glow), var(--gold) 45%, var(--gold-deep) 100%);
+         box-shadow:inset 0 0 0 2px rgba(120,80,20,.55), 0 0 8px rgba(242,207,107,.5);
+         position:relative; flex:none; }
+  .coin::after{ content:"✦"; position:absolute; inset:0; display:grid; place-items:center;
+                font-size:12px; color:#7d5818; }
+  #goldText{ font-size:clamp(16px,3vw,22px); color:var(--gold-glow);
+             text-shadow:0 1px 2px rgba(0,0,0,.7); letter-spacing:.04em; }
+  #echoChip .gem{ width:16px; height:16px; flex:none;
+             background:var(--teal); transform:rotate(45deg);
+             box-shadow:0 0 10px var(--teal), inset 0 0 4px rgba(255,255,255,.6); }
+  #echoText{ font-size:clamp(13px,2.4vw,16px); color:#bfeee6; letter-spacing:.03em; }
+  .spacer{ flex:1; }
+
+  /* ---------- top-right controls ---------- */
+  #topRight{ position:fixed; top:10px; right:12px; z-index:21; display:flex; gap:8px; }
+  .icon-btn{
+    width:46px; height:46px; border-radius:10px; cursor:pointer;
+    background:linear-gradient(180deg, rgba(20,14,6,.8), rgba(8,5,2,.85));
+    border:1px solid var(--gold-deep); color:var(--gold);
+    font-size:20px; display:grid; place-items:center;
+    box-shadow:0 4px 12px rgba(0,0,0,.5); touch-action:manipulation;
+  }
+  .icon-btn:active{ transform:translateY(2px); }
+
+  /* ---------- virtual joystick ---------- */
+  #joyWrap{ position:fixed; left:18px; bottom:18px; width:150px; height:150px;
+            z-index:18; touch-action:none; }
+  #joyBase{ position:absolute; inset:0; border-radius:50%;
+            background:radial-gradient(circle at 50% 50%, rgba(57,214,192,.10), rgba(8,16,28,.30));
+            border:2px solid rgba(242,207,107,.35);
+            box-shadow:inset 0 0 30px rgba(0,0,0,.4); }
+  #joyKnob{ position:absolute; left:50%; top:50%; width:62px; height:62px; margin:-31px 0 0 -31px;
+            border-radius:50%;
+            background:radial-gradient(circle at 38% 32%, var(--gold-glow), var(--gold) 50%, var(--gold-deep));
+            border:1px solid #6e4f14;
+            box-shadow:0 4px 12px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.6);
+            transition:opacity .2s; }
+  .joy-hint{ position:absolute; left:50%; bottom:-22px; transform:translateX(-50%);
+             font-family:var(--display); font-size:12px; color:rgba(242,207,107,.6);
+             letter-spacing:.12em; white-space:nowrap; }
+
+  /* ---------- dock button ---------- */
+  #dockBtn{ position:fixed; left:50%; bottom:34px; transform:translateX(-50%) scale(.9);
+            z-index:19; display:none; opacity:0; transition:opacity .25s, transform .25s;
+            font-size:clamp(16px,3vw,22px); padding:16px 34px; }
+  #dockBtn.show{ display:block; opacity:1; transform:translateX(-50%) scale(1); }
+  #dockBtn .anchor{ margin-right:8px; }
+
+  /* ---------- full-screen overlays ---------- */
+  .overlay{ position:fixed; inset:0; z-index:40; display:none;
+            align-items:center; justify-content:center; padding:18px;
+            background:radial-gradient(120% 120% at 50% 30%, rgba(6,13,24,.6), rgba(3,7,14,.92)); }
+  .overlay.show{ display:flex; }
+  .sheet{ width:min(680px,94vw); max-height:92vh; overflow:auto; padding:26px 30px; }
+
+  #title .sheet{ text-align:center; }
+  .game-title{ font-family:var(--display); font-weight:600;
+    font-size:clamp(34px,7vw,58px); line-height:1.02; color:var(--ink);
+    letter-spacing:.04em; text-shadow:0 2px 0 rgba(255,255,255,.4), 0 4px 10px rgba(120,80,20,.3); }
+  .game-sub{ font-family:var(--body); font-style:italic; color:var(--ink-soft);
+    font-size:clamp(14px,2.6vw,18px); margin:10px 0 22px; }
+  .rule{ height:2px; margin:18px auto; width:60%;
+    background:linear-gradient(90deg,transparent,var(--parch-edge),transparent); }
+  .btn-row{ display:flex; gap:12px; flex-wrap:wrap; justify-content:center; margin-top:6px; }
+  .lifetime{ margin-top:18px; font-size:13px; color:var(--ink-soft); letter-spacing:.04em; }
+
+  .sheet h2{ font-family:var(--display); font-size:clamp(22px,4vw,30px); color:var(--ink);
+             margin-bottom:6px; letter-spacing:.03em; }
+  .sheet h3{ font-family:var(--display); color:var(--gold-deep); margin:14px 0 4px;
+             font-size:16px; letter-spacing:.06em; text-transform:uppercase; }
+  .sheet p{ font-size:15px; line-height:1.5; color:var(--ink-soft); margin:4px 0; }
+  .sheet ul{ list-style:none; margin:6px 0; }
+  .sheet li{ font-size:15px; line-height:1.6; color:#3a2810; padding-left:18px; position:relative; }
+  .sheet li::before{ content:"✦"; position:absolute; left:0; color:var(--gold-deep); font-size:11px; top:3px; }
+  .key{ font-family:var(--mono); background:rgba(40,28,10,.12); border:1px solid var(--parch-edge);
+        border-radius:4px; padding:1px 7px; font-size:13px; color:var(--ink); }
+
+  /* dock overlay: name + poetic desc above the canvas chest */
+  #dock .dock-card{ position:fixed; left:50%; top:8%; transform:translateX(-50%);
+        width:min(560px,92vw); text-align:center; z-index:42; }
+  #dock .dock-card .panel{ padding:18px 22px; }
+  #dockName{ font-family:var(--display); font-size:clamp(24px,5vw,34px); color:var(--ink); letter-spacing:.03em; }
+  #dockDesc{ font-style:italic; color:var(--ink-soft); font-size:clamp(14px,2.8vw,18px); margin-top:6px; }
+  #dock .dock-actions{ position:fixed; left:50%; bottom:7%; transform:translateX(-50%);
+        z-index:42; display:flex; gap:14px; }
+  #dock{ background:radial-gradient(120% 120% at 50% 60%, rgba(6,13,24,.35), rgba(3,7,14,.86)); }
+
+  /* echo reveal — the signature mystical moment */
+  #echo{ background:rgba(2,6,12,.86); }
+  #echo .echo-card{ width:min(640px,92vw); text-align:center; padding:8px 20px; }
+  #echo .echo-eyebrow{ font-family:var(--display); letter-spacing:.4em; text-transform:uppercase;
+        color:var(--teal); font-size:13px; margin-bottom:18px; opacity:0; animation:fade .9s .15s forwards; }
+  #echoLine{ font-family:var(--display); font-style:italic; font-weight:500;
+        font-size:clamp(22px,5vw,38px); line-height:1.35; color:#eaf7f3;
+        text-shadow:0 0 24px rgba(57,214,192,.45); opacity:0; animation:rise 1.4s .35s forwards; }
+  #echo .echo-hint{ margin-top:28px; color:rgba(190,238,230,.5); font-size:13px;
+        letter-spacing:.2em; opacity:0; animation:fade 1s 1.6s forwards; }
+  @keyframes fade{ to{ opacity:1; } }
+  @keyframes rise{ from{ opacity:0; transform:translateY(14px); } to{ opacity:1; transform:translateY(0);} }
+
+  /* pause + summary */
+  #pause .sheet, #summary .sheet{ text-align:center; }
+  .stat-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:18px 0; }
+  .stat{ background:rgba(40,28,10,.08); border:1px solid var(--parch-edge); border-radius:8px; padding:12px; }
+  .stat .num{ font-family:var(--display); font-size:clamp(24px,5vw,34px); color:var(--gold-deep); }
+  .stat .lbl{ font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); margin-top:2px; }
+  .closer{ font-style:italic; font-size:clamp(15px,3vw,19px); color:var(--ink-soft); margin:16px 0 8px; }
+  .newbest{ color:var(--crimson); font-family:var(--display); letter-spacing:.1em; }
+
+  /* debug + misc */
+  #fps{ position:fixed; left:8px; top:8px; z-index:60; font-family:var(--mono); font-size:12px;
+        color:#7fffd0; background:rgba(0,0,0,.4); padding:3px 7px; border-radius:4px; display:none; }
+  #flash{ position:fixed; inset:0; z-index:55; pointer-events:none; opacity:0;
+          background:radial-gradient(circle, rgba(57,214,192,.0), rgba(6,13,24,.0)); transition:opacity .3s; }
+  .hidden{ display:none!important; }
+
+  @media (max-height:430px){
+    #joyWrap{ width:120px; height:120px; }
+    #joyKnob{ width:50px; height:50px; margin:-25px 0 0 -25px; }
+  }
+  /* ---------- port shop ---------- */
+  .shop-sheet{ width:min(640px,94vw); }
+  .shop-wallet{ font-family:var(--display); color:var(--gold-deep); font-size:18px; text-align:center; margin:-4px 0 14px; }
+  .shop-wallet span{ color:#7a5a18; font-weight:600; }
+  .shop-tabs{ display:flex; gap:8px; justify-content:center; margin-bottom:14px; }
+  .shop-tab{ font-family:var(--display); font-size:15px; letter-spacing:.04em; cursor:pointer;
+    padding:8px 22px; border-radius:7px; color:var(--ink-soft);
+    background:rgba(40,28,10,.10); border:1px solid var(--parch-edge); }
+  .shop-tab.active{ color:#2a1c08;
+    background:linear-gradient(180deg,var(--gold-glow),var(--gold) 60%,var(--gold-deep));
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.5); }
+  .shop-list{ display:flex; flex-direction:column; gap:10px; max-height:46vh; overflow:auto; padding:2px; }
+  .shop-card{ display:flex; align-items:center; gap:14px; text-align:left;
+    background:rgba(40,28,10,.07); border:1px solid var(--parch-edge); border-radius:9px; padding:12px 14px; }
+  .shop-card.is-equipped{ border-color:var(--teal); box-shadow:inset 0 0 14px rgba(57,214,192,.18); }
+  .shop-info{ flex:1; min-width:0; }
+  .shop-name{ font-family:var(--display); font-size:17px; color:#2a1c08; }
+  .shop-desc{ font-size:13px; line-height:1.45; color:var(--ink-soft); margin-top:2px; }
+  .shop-stats{ font-size:12px; color:var(--gold-deep); margin-top:5px; letter-spacing:.05em; }
+  .shop-pips{ display:flex; gap:6px; margin-top:8px; }
+  .pip{ width:12px; height:12px; border-radius:3px; transform:rotate(45deg);
+    background:rgba(40,28,10,.16); border:1px solid var(--parch-edge); }
+  .pip.on{ background:radial-gradient(circle at 35% 30%,var(--gold-glow),var(--gold) 60%,var(--gold-deep)); border-color:var(--gold-deep); }
+  .shop-act{ flex:none; }
+  .btn.small.disabled, .btn.small:disabled{ filter:grayscale(.55) brightness(.82); cursor:default; opacity:.7; }
+  .shop-tag{ font-family:var(--display); font-size:14px; padding:9px 14px; border-radius:7px; display:inline-block; }
+  .shop-tag.equipped{ color:#06231f; background:var(--teal); box-shadow:inset 0 0 8px rgba(255,255,255,.4); }
+  .shop-tag.maxed{ color:var(--gold); border:1px solid var(--gold-deep); }
+  /* event toast (storm warning / kraken) */
+  #toast{ position:fixed; left:50%; top:13%; transform:translateX(-50%) translateY(-8px);
+    z-index:35; pointer-events:none; opacity:0; transition:opacity .35s, transform .35s;
+    font-family:var(--display); font-size:17px; letter-spacing:.02em; color:var(--gold-glow);
+    text-align:center; padding:12px 22px; border-radius:10px; max-width:min(560px,88vw);
+    background:linear-gradient(180deg, rgba(28,18,8,.93), rgba(12,8,3,.95));
+    border:1px solid var(--gold-deep);
+    box-shadow:0 6px 26px rgba(0,0,0,.5), inset 0 0 18px rgba(242,207,107,.12); }
+  #toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+  /* contextual sailing controls (anchor / focus on ship) */
+  .sail-btn{ position:fixed; right:16px; z-index:21; display:none; align-items:center; justify-content:center;
+    min-width:128px; min-height:46px; padding:9px 14px; border-radius:10px;
+    font-family:var(--display); font-size:15px; letter-spacing:.03em; color:#2a1c08; cursor:pointer;
+    background:linear-gradient(180deg,var(--gold-glow),var(--gold) 58%,var(--gold-deep));
+    border:1px solid var(--gold-deep);
+    box-shadow:0 4px 14px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.5);
+    -webkit-user-select:none; user-select:none; touch-action:none; }
+  .sail-btn .ic{ margin-right:7px; font-size:16px; }
+  .sail-btn.show{ display:inline-flex; }
+  .sail-btn:active, .sail-btn.active{ filter:brightness(.9); box-shadow:inset 0 2px 6px rgba(0,0,0,.35); }
+  #anchorBtn{ bottom:206px; }
+  #focusBtn{ bottom:262px; color:#06231f; border-color:#1f9d8c;
+    background:linear-gradient(180deg,#d2efe9,var(--teal) 60%,#1f9d8c); }
+  @media (max-width:560px){ #anchorBtn{ bottom:172px; } #focusBtn{ bottom:226px; } .sail-btn{ min-width:116px; min-height:44px; } }
+  /* trader hail button + merchant dialog */
+  #hailBtn{ position:fixed; left:50%; bottom:92px; transform:translateX(-50%) scale(.9);
+    z-index:21; display:none; opacity:0; transition:opacity .2s, transform .2s;
+    color:#06231f; border-color:#1f9d8c;
+    background:linear-gradient(180deg,#d2efe9,var(--teal) 60%,#1f9d8c); }
+  #hailBtn.show{ display:block; opacity:1; transform:translateX(-50%) scale(1); }
+  #hailBtn .anchor{ margin-right:6px; }
+  .merchant-line{ font-style:italic; color:var(--ink-soft); line-height:1.5; margin:10px 0 2px; font-size:15px; }
+  #merchantOpts{ flex-direction:column; gap:10px; }
+  #merchantOpts .btn{ width:100%; }
+  /* ---- Android/notch hardening: keep UI clear of cutouts & gesture bars ---- */
+  #hud{ padding-top: calc(10px + env(safe-area-inset-top)); padding-left: calc(12px + env(safe-area-inset-left)); padding-right: calc(12px + env(safe-area-inset-right)); }
+  #topRight{ top: calc(10px + env(safe-area-inset-top)); right: calc(12px + env(safe-area-inset-right)); }
+  #joyWrap{ left: calc(18px + env(safe-area-inset-left)); bottom: calc(18px + env(safe-area-inset-bottom)); }
+  #dockBtn{ bottom: calc(34px + env(safe-area-inset-bottom)); }
+  #hailBtn{ bottom: calc(92px + env(safe-area-inset-bottom)); }
+  #anchorBtn{ right: calc(16px + env(safe-area-inset-right)); bottom: calc(206px + env(safe-area-inset-bottom)); }
+  #focusBtn{ right: calc(16px + env(safe-area-inset-right)); bottom: calc(262px + env(safe-area-inset-bottom)); }
+  @media (max-width:560px){
+    #anchorBtn{ bottom: calc(172px + env(safe-area-inset-bottom)); }
+    #focusBtn{ bottom: calc(226px + env(safe-area-inset-bottom)); }
+  }
+</style>
+</head>
+<body>
+  <canvas id="sea"></canvas>
+
+  <!-- HUD -->
+  <div id="hud" class="hidden">
+    <div class="hud-chip"><span class="coin"></span><span id="goldText">0</span></div>
+    <div class="hud-chip" id="echoChip"><span class="gem"></span><span id="echoText">Echoes 0/0</span></div>
+  </div>
+  <div id="topRight" class="hidden">
+    <button class="icon-btn" id="muteBtn" title="Mute">♪</button>
+    <button class="icon-btn" id="pauseBtn" title="Pause">⏸</button>
+  </div>
+
+  <!-- joystick + dock -->
+  <div id="joyWrap" class="hidden">
+    <div id="joyBase"></div>
+    <div id="joyKnob"></div>
+    <div class="joy-hint">DRAG TO SAIL</div>
+  </div>
+  <button class="btn" id="dockBtn"><span class="anchor">⚓</span><span id="dockBtnLabel">DOCK</span></button>
+  <button class="sail-btn" id="anchorBtn"><span class="ic">⚓</span>Anchor</button>
+  <button class="sail-btn" id="focusBtn"><span class="ic">◎</span>Focus Ship</button>
+  <button class="btn" id="hailBtn"><span class="anchor">⚖</span> Hail Trader</button>
+
+  <!-- TITLE -->
+  <div class="overlay show" id="title">
+    <div class="sheet panel">
+      <div class="game-title">Tides of the<br>Forgotten</div>
+      <div class="game-sub">A lone captain, an unmapped sea, and the treasures that remember your name.</div>
+      <div class="rule"></div>
+      <div class="btn-row">
+        <button class="btn hidden" id="continueBtn">↻ Continue Last Voyage</button>
+        <button class="btn" id="beginBtn">⚓ Begin Your Voyage</button>
+        <button class="btn ghost" id="howBtn">How to Play</button>
+      </div>
+      <div class="lifetime" id="lifetimeLine"></div>
+    </div>
+  </div>
+
+  <!-- HOW TO PLAY -->
+  <div class="overlay" id="howto">
+    <div class="sheet panel">
+      <h2>The Captain's Charter</h2>
+      <p>The sea is yours to wander. There is no failing — only what you discover before you turn for port.</p>
+      <h3>Sailing</h3>
+      <ul>
+        <li><b>Touch:</b> drag the wheel (bottom-left) — the further you push, the more sail you set.</li>
+        <li><b>Keyboard:</b> <span class="key">W</span>/<span class="key">↑</span> thrust, <span class="key">A</span><span class="key">D</span>/<span class="key">←</span><span class="key">→</span> steer, <span class="key">S</span> ease off.</li>
+      </ul>
+      <h3>Discovery</h3>
+      <ul>
+        <li>Your compass needle leans toward the nearest unclaimed island.</li>
+        <li>Slow down beside an island and the <b>DOCK</b> button rises. Open the chest for gold — and sometimes an <b>Echo</b>, a vision the deep offers up.</li>
+        <li>Salvage drifting crates, and ride out the squalls that roll across the water.</li>
+      </ul>
+      <h3>Port</h3>
+      <ul>
+        <li>Return to port anytime from the pause menu to bank your voyage and chase your best.</li>
+      </ul>
+      <div class="btn-row"><button class="btn" id="howCloseBtn">Set Sail</button></div>
+    </div>
+  </div>
+
+  <!-- DOCK MODE (chest is drawn on canvas) -->
+  <div class="overlay" id="dock">
+    <div class="dock-card">
+      <div class="panel" style="padding:16px 20px">
+        <div id="dockName">Island</div>
+        <div id="dockDesc">A quiet shore.</div>
+      </div>
+    </div>
+    <div class="dock-actions">
+      <button class="btn" id="openChestBtn">Open the Chest</button>
+      <button class="btn ghost" id="leaveDockBtn">Set Sail</button>
+    </div>
+  </div>
+
+  <!-- ECHO REVEAL -->
+  <div class="overlay" id="echo">
+    <div class="echo-card">
+      <div class="echo-eyebrow">An Echo Surfaces</div>
+      <div id="echoLine">…</div>
+      <div class="echo-hint">tap to continue</div>
+    </div>
+  </div>
+
+  <!-- PAUSE -->
+  <div class="overlay" id="pause">
+    <div class="sheet panel">
+      <h2>Becalmed</h2>
+      <p>The wheel is lashed. The sea waits.</p>
+      <div class="btn-row" style="margin-top:18px; flex-direction:column; align-items:center;">
+        <button class="btn" id="resumeBtn" style="width:240px">Resume Voyage</button>
+        <button class="btn ghost" id="saveBtn" style="width:240px">Save Voyage</button>
+        <button class="btn ghost" id="shopBtn" style="width:240px">⚓ Visit Port Shop</button>
+        <button class="btn ghost" id="pauseHowBtn" style="width:240px">How to Play</button>
+        <button class="btn ghost" id="pauseMuteBtn" style="width:240px">Sound: On</button>
+        <button class="btn ghost" id="restartBtn" style="width:240px">Restart Voyage</button>
+        <button class="btn ghost" id="portBtn" style="width:240px">End Voyage &amp; Return to Port</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUMMARY -->
+  <div class="overlay" id="summary">
+    <div class="sheet panel">
+      <h2>Back to Port</h2>
+      <div id="newBest" class="newbest hidden">★ A New Best Voyage ★</div>
+      <div class="stat-grid">
+        <div class="stat"><div class="num" id="sumGold">0</div><div class="lbl">Gold Earned</div></div>
+        <div class="stat"><div class="num" id="sumIslands">0</div><div class="lbl">Isles Found</div></div>
+        <div class="stat"><div class="num" id="sumEchoes">0</div><div class="lbl">Echoes Heard</div></div>
+        <div class="stat"><div class="num" id="sumBest">0</div><div class="lbl">Best Voyage</div></div>
+      </div>
+      <div class="closer" id="closerLine">The sea always calls you back…</div>
+      <div class="rule"></div>
+      <div class="btn-row"><button class="btn" id="newVoyageBtn">⚓ New Voyage</button></div>
+    </div>
+  </div>
+
+  <!-- PORT SHOP -->
+  <div class="overlay" id="shop">
+    <div class="sheet panel shop-sheet">
+      <h2>Port Shop</h2>
+      <div class="shop-wallet">Treasury: <span id="shopGold">0</span> gold</div>
+      <div class="shop-tabs">
+        <button class="shop-tab active" id="tabShips">Ships</button>
+        <button class="shop-tab" id="tabUpg">Upgrades</button>
+      </div>
+      <div class="shop-list" id="shopShips"></div>
+      <div class="shop-list hidden" id="shopUpgrades"></div>
+      <div class="rule"></div>
+      <div class="btn-row"><button class="btn" id="shopCloseBtn">Back to Deck</button></div>
+    </div>
+  </div>
+
+  <!-- MERCHANT -->
+  <div class="overlay" id="merchant">
+    <div class="sheet panel" style="max-width:440px">
+      <h2 id="merchantName">A passing trader</h2>
+      <div id="merchantLine" class="merchant-line">…</div>
+      <div class="rule"></div>
+      <div class="btn-row" id="merchantOpts"></div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+  <div id="flash"></div>
+  <div id="fps">–</div>
+
+<script>
+"use strict";
+/* roundRect polyfill (older Android/Safari) */
+if(!CanvasRenderingContext2D.prototype.roundRect){
+  CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){
+    if(typeof r==="number") r={tl:r,tr:r,br:r,bl:r};
+    else r=r||{tl:0,tr:0,br:0,bl:0};
+    if(typeof r==="number"){} 
+    const tl=r.tl??r, tr=r.tr??r, br=r.br??r, bl=r.bl??r;
+    this.beginPath();
+    this.moveTo(x+tl,y);
+    this.lineTo(x+w-tr,y); this.arcTo(x+w,y,x+w,y+tr,tr);
+    this.lineTo(x+w,y+h-br); this.arcTo(x+w,y+h,x+w-br,y+h,br);
+    this.lineTo(x+bl,y+h); this.arcTo(x,y+h,x,y+h-bl,bl);
+    this.lineTo(x,y+tl); this.arcTo(x,y,x+tl,y,tl);
+    this.closePath(); return this;
+  };
+}
+/* =================================================================
+   TIDES OF THE FORGOTTEN
+   A single-file procedural pirate sailing game.
+   Canvas + Web Audio API + vanilla JS. No assets, no libraries.
+
+   Sections:
+     1.  Constants & helpers
+     2.  Seeded RNG
+     3.  AudioManager      (pure synthesis)
+     4.  ParticleSystem
+     5.  Ship
+     6.  Island / Debris / GhostShip
+     7.  GameState + persistence
+     8.  Input (joystick + keyboard)
+     9.  World generation
+     10. Rendering (sea, world, HUD, minimap, compass)
+     11. UIManager (overlays / flow)
+     12. Main loop + init
+   ================================================================= */
+
+/* ---------------- 1. Constants & helpers ---------------- */
+const WORLD = 5200;                 // square ocean, units
+const TAU = Math.PI * 2;
+const clamp = (v,a,b)=> v<a?a : v>b?b : v;
+const lerp  = (a,b,t)=> a + (b-a)*t;
+const dist  = (x1,y1,x2,y2)=> Math.hypot(x1-x2, y1-y2);
+const rand  = (a,b)=> a + Math.random()*(b-a);
+
+// shortest signed angle difference (target - current), normalized to [-PI,PI]
+function angDiff(cur, tar){
+  let d = (tar - cur) % TAU;
+  if (d >  Math.PI) d -= TAU;
+  if (d < -Math.PI) d += TAU;
+  return d;
+}
+// apply alpha to a #rrggbb color string -> rgba()
+function mixHex(a,b,t){
+  const pa=parseInt(a.slice(1),16), pb=parseInt(b.slice(1),16);
+  const ar=(pa>>16)&255,ag=(pa>>8)&255,ab=pa&255, br=(pb>>16)&255,bg=(pb>>8)&255,bb=pb&255;
+  const r=Math.round(ar+(br-ar)*t),g=Math.round(ag+(bg-ag)*t),c=Math.round(ab+(bb-ab)*t);
+  return "#"+((1<<24)|(r<<16)|(g<<8)|c).toString(16).slice(1);
+}
+function hexA(hex, a){
+  const n = parseInt(hex.slice(1), 16);
+  return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`;
+}
+
+/* ---------------- 2. Seeded RNG (mulberry32) ---------------- */
+function makeRNG(seed){
+  let s = seed >>> 0;
+  return function(){
+    s |= 0; s = (s + 0x6D2B79F5) | 0;
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+// hash a string to a 32-bit seed (so word-seeds work too)
+function hashSeed(str){
+  let h = 1779033703 ^ str.length;
+  for (let i=0;i<str.length;i++){
+    h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+    h = (h << 13) | (h >>> 19);
+  }
+  return (h ^ (h>>>16)) >>> 0;
+}
+
+/* ---------------- 3. AudioManager (pure Web Audio synthesis) ---------------- */
+class AudioManager{
+  constructor(){
+    this.ctx = null;
+    this.master = null;
+    this.muted = false;
+    this.volume = 0.8;
+    this.started = false;
+    this.windGain = null;
+    this.windFilter = null;
+    this.stormGain = null;
+  }
+  // must be called from a user gesture (browser autoplay policy)
+  init(){
+    if (this.started) return;
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    this.ctx = new AC();
+    this.master = this.ctx.createGain();
+    this.master.gain.value = this.muted ? 0 : this.volume;
+    this.master.connect(this.ctx.destination);
+    this.started = true;
+    this._buildAmbient();
+  }
+  resume(){ if (this.ctx && this.ctx.state === "suspended") this.ctx.resume(); }
+
+  // Looping sea bed: a low drone + filtered noise "waves" + a moving wind layer.
+  _buildAmbient(){
+    const ctx = this.ctx, now = ctx.currentTime;
+
+    // --- low ocean drone (two detuned oscillators) ---
+    const drone = ctx.createGain(); drone.gain.value = 0.12; drone.connect(this.master);
+    [55, 55.6, 82.5].forEach((f,i)=>{
+      const o = ctx.createOscillator();
+      o.type = "sine"; o.frequency.value = f;
+      const g = ctx.createGain(); g.gain.value = i===2 ? 0.35 : 1;
+      o.connect(g); g.connect(drone); o.start();
+    });
+
+    // --- wave wash: brown-ish noise through a slow LFO-swept lowpass ---
+    const noise = this._noiseBuffer(4);
+    const waves = ctx.createBufferSource(); waves.buffer = noise; waves.loop = true;
+    const wf = ctx.createBiquadFilter(); wf.type = "lowpass"; wf.frequency.value = 420; wf.Q.value = 0.7;
+    const wg = ctx.createGain(); wg.gain.value = 0.10;
+    waves.connect(wf); wf.connect(wg); wg.connect(this.master); waves.start();
+    // gentle swell LFO on the wave volume
+    const lfo = ctx.createOscillator(); lfo.frequency.value = 0.12;
+    const lfoG = ctx.createGain(); lfoG.gain.value = 0.05;
+    lfo.connect(lfoG); lfoG.connect(wg.gain); lfo.start();
+
+    // --- wind layer (controlled by ship speed) ---
+    const wind = ctx.createBufferSource(); wind.buffer = noise; wind.loop = true;
+    this.windFilter = ctx.createBiquadFilter(); this.windFilter.type = "bandpass";
+    this.windFilter.frequency.value = 600; this.windFilter.Q.value = 0.8;
+    this.windGain = ctx.createGain(); this.windGain.gain.value = 0.0;
+    wind.connect(this.windFilter); this.windFilter.connect(this.windGain);
+    this.windGain.connect(this.master); wind.start();
+
+    // --- storm rumble bus (silent until a storm) ---
+    const stormSrc = ctx.createBufferSource(); stormSrc.buffer = noise; stormSrc.loop = true;
+    const sf = ctx.createBiquadFilter(); sf.type = "lowpass"; sf.frequency.value = 160;
+    this.stormGain = ctx.createGain(); this.stormGain.gain.value = 0.0;
+    stormSrc.connect(sf); sf.connect(this.stormGain); this.stormGain.connect(this.master); stormSrc.start();
+  }
+
+  _noiseBuffer(seconds){
+    const ctx = this.ctx, len = ctx.sampleRate * seconds;
+    const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    let last = 0;
+    for (let i=0;i<len;i++){
+      const white = Math.random()*2 - 1;
+      last = (last + 0.02*white) / 1.02;     // brown-ish
+      d[i] = last * 3.5;
+    }
+    return buf;
+  }
+
+  // called every frame with normalized speed 0..1
+  updateWind(speed01){
+    if (!this.started) return;
+    const g = 0.02 + speed01 * 0.16;
+    this.windGain.gain.setTargetAtTime(g, this.ctx.currentTime, 0.2);
+    this.windFilter.frequency.setTargetAtTime(500 + speed01*900, this.ctx.currentTime, 0.2);
+  }
+  setStorm(intensity){ // 0..1
+    if (!this.started) return;
+    this.stormGain.gain.setTargetAtTime(intensity*0.5, this.ctx.currentTime, 0.4);
+  }
+
+  // ---- one-shot synths ----
+  _env(node, peak, dur, t0){
+    const g = this.ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(peak, t0 + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    node.connect(g); g.connect(this.master);
+    return g;
+  }
+  blip(freq, dur=0.18, type="sine", peak=0.25){
+    if (!this.started) return;
+    const t0 = this.ctx.currentTime;
+    const o = this.ctx.createOscillator(); o.type = type; o.frequency.value = freq;
+    this._env(o, peak, dur, t0); o.start(t0); o.stop(t0 + dur + 0.05);
+  }
+  // bright ascending loot chime (arpeggio of pure tones)
+  loot(){
+    if (!this.started) return;
+    const notes = [659, 784, 988, 1318];   // E5 G5 B5 E6
+    notes.forEach((f,i)=> setTimeout(()=> this.blip(f, 0.5, "triangle", 0.22), i*70));
+  }
+  echoChime(){
+    if (!this.started) return;
+    const notes = [523, 659, 784, 1047, 1319];
+    notes.forEach((f,i)=> setTimeout(()=> this.blip(f, 1.1, "sine", 0.18), i*150));
+  }
+  splash(){
+    if (!this.started) return;
+    const t0 = this.ctx.currentTime;
+    const s = this.ctx.createBufferSource(); s.buffer = this._noiseBuffer(0.5); s.loop = false;
+    const f = this.ctx.createBiquadFilter(); f.type = "highpass"; f.frequency.value = 800;
+    const g = this.ctx.createGain();
+    g.gain.setValueAtTime(0.35, t0);
+    g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.4);
+    s.connect(f); f.connect(g); g.connect(this.master); s.start(t0); s.stop(t0+0.5);
+  }
+  salvage(){ this.blip(440,0.12,"square",0.16); setTimeout(()=>this.blip(660,0.18,"square",0.16),90); }
+  thunder(){
+    if (!this.started) return;
+    const t0 = this.ctx.currentTime;
+    const s = this.ctx.createBufferSource(); s.buffer = this._noiseBuffer(1.2);
+    const f = this.ctx.createBiquadFilter(); f.type="lowpass"; f.frequency.value=300;
+    const g = this.ctx.createGain();
+    g.gain.setValueAtTime(0.0001,t0);
+    g.gain.exponentialRampToValueAtTime(0.5,t0+0.05);
+    g.gain.exponentialRampToValueAtTime(0.001,t0+1.2);
+    s.connect(f); f.connect(g); g.connect(this.master); s.start(t0); s.stop(t0+1.2);
+  }
+  stormWarn(){ // distant low swell of rumble that announces a coming storm
+    if(!this.started) return; const t0=this.ctx.currentTime;
+    const s2=this.ctx.createBufferSource(); s2.buffer=this._noiseBuffer(2.0);
+    const f=this.ctx.createBiquadFilter(); f.type="lowpass"; f.frequency.value=170;
+    const g=this.ctx.createGain(); g.gain.setValueAtTime(0.0001,t0);
+    g.gain.exponentialRampToValueAtTime(0.30,t0+0.9); g.gain.exponentialRampToValueAtTime(0.001,t0+2.0);
+    s2.connect(f); f.connect(g); g.connect(this.master); s2.start(t0); s2.stop(t0+2.0);
+  }
+  krakenRoar(){
+    if(!this.started) return; const t0=this.ctx.currentTime;
+    const o=this.ctx.createOscillator(); o.type="sawtooth"; o.frequency.setValueAtTime(62,t0);
+    o.frequency.exponentialRampToValueAtTime(26,t0+1.4);
+    const f=this.ctx.createBiquadFilter(); f.type="lowpass"; f.frequency.value=440;
+    const g=this.ctx.createGain(); g.gain.setValueAtTime(0.0001,t0);
+    g.gain.exponentialRampToValueAtTime(0.42,t0+0.15); g.gain.exponentialRampToValueAtTime(0.001,t0+1.5);
+    o.connect(f); f.connect(g); g.connect(this.master); o.start(t0); o.stop(t0+1.5);
+  }
+  cannonFire(){
+    if(!this.started) return; const t0=this.ctx.currentTime;
+    const s2=this.ctx.createBufferSource(); s2.buffer=this._noiseBuffer(0.35);
+    const f=this.ctx.createBiquadFilter(); f.type="lowpass";
+    f.frequency.setValueAtTime(950,t0); f.frequency.exponentialRampToValueAtTime(120,t0+0.3);
+    const g=this.ctx.createGain(); g.gain.setValueAtTime(0.32,t0); g.gain.exponentialRampToValueAtTime(0.001,t0+0.35);
+    s2.connect(f); f.connect(g); g.connect(this.master); s2.start(t0); s2.stop(t0+0.35);
+  }
+  cannonHit(){ this.blip(170,0.12,"square",0.22); setTimeout(()=>this.blip(88,0.2,"sawtooth",0.2),40); }
+  click(){ this.blip(330,0.07,"square",0.12); }
+
+  setMuted(m){ this.muted = m; if (this.master) this.master.gain.setTargetAtTime(m?0:this.volume, this.ctx.currentTime, 0.05); }
+}
+
+/* ---------------- 4. ParticleSystem ---------------- */
+// One pooled system handles foam wake, gold sparks, splash, rain & floating text.
+class ParticleSystem{
+  constructor(){ this.parts = []; this.texts = []; }
+  spawn(p){ this.parts.push(p); }
+  foam(x,y,vx,vy){
+    this.parts.push({ x,y, vx:vx+rand(-8,8), vy:vy+rand(-8,8),
+      life:rand(.5,1.0), max:1, r:rand(2,5), kind:"foam" });
+  }
+  spark(x,y,color){
+    const a = rand(0,TAU), sp = rand(40,260);
+    this.parts.push({ x,y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp - rand(20,120),
+      life:rand(.6,1.2), max:1.2, r:rand(1.5,3.5), kind:"spark", color });
+  }
+  splash(x,y){
+    for(let i=0;i<14;i++){
+      const a=rand(-Math.PI,0), sp=rand(60,200);
+      this.parts.push({ x,y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp,
+        life:rand(.4,.8), max:.8, r:rand(2,5), kind:"foam" });
+    }
+  }
+  floatText(x,y,txt,color){ this.texts.push({ x,y, txt, color, life:1.4, max:1.4 }); }
+  coin(x,y){
+    const a=rand(-Math.PI*0.82,-Math.PI*0.18), sp=rand(140,330);
+    this.parts.push({ x,y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp,
+      life:rand(.9,1.5), max:1.5, r:rand(3,5), kind:"coin", spin:rand(0,TAU), vs:rand(-9,9) });
+  }
+  ring(x,y,color){ this.parts.push({ x,y, vx:0, vy:0, life:0.7, max:0.7, r:8, kind:"ring", color:color||"#7fe9d6" }); }
+  smoke(x,y){ this.parts.push({ x,y, vx:rand(-10,10), vy:rand(-32,-10), life:rand(.5,.9), max:.9, r:rand(4,8), kind:"smoke" }); }
+  fish(x,y){ const dir=Math.random()<0.5?-1:1;
+    this.parts.push({ x,y, vx:dir*rand(34,72), vy:-rand(120,195), life:0.95, max:0.95, r:rand(3,5), kind:"fish", dir });
+    for(let i=0;i<4;i++){ const a=rand(-Math.PI,0); this.parts.push({x,y,vx:Math.cos(a)*55,vy:Math.sin(a)*55,life:.4,max:.4,r:3,kind:"foam"}); } }
+
+  update(dt){
+    for(let i=this.parts.length-1;i>=0;i--){
+      const p=this.parts[i];
+      p.x+=p.vx*dt; p.y+=p.vy*dt;
+      if(p.kind==="spark"){ p.vy+=260*dt; p.vx*=0.98; }
+      else if(p.kind==="coin"){ p.vy+=460*dt; p.vx*=0.99; p.spin+=p.vs*dt; }
+      else if(p.kind==="ring"){ p.r+=170*dt; }
+      else if(p.kind==="smoke"){ p.r+=18*dt; p.vy*=0.96; }
+      else if(p.kind==="fish"){ p.vy+=320*dt; }
+      else { p.vx*=0.94; p.vy*=0.94; }
+      p.life-=dt;
+      if(p.life<=0) this.parts.splice(i,1);
+    }
+    for(let i=this.texts.length-1;i>=0;i--){
+      const t=this.texts[i]; t.y-=34*dt; t.life-=dt;
+      if(t.life<=0) this.texts.splice(i,1);
+    }
+  }
+  // drawn in WORLD space (caller has applied camera transform)
+  draw(ctx){
+    for(const p of this.parts){
+      const a = clamp(p.life/p.max,0,1);
+      if(p.kind==="coin"){
+        const wob=Math.abs(Math.cos(p.spin));
+        ctx.save();
+        ctx.shadowColor="#ffcf6a"; ctx.shadowBlur=6;
+        ctx.fillStyle=hexA("#f2cf6b", a);
+        ctx.beginPath(); ctx.ellipse(p.x,p.y, Math.max(0.6,p.r*wob), p.r, 0,0,TAU); ctx.fill();
+        ctx.fillStyle=hexA("#fff0c0", a*0.9);
+        ctx.beginPath(); ctx.ellipse(p.x-p.r*0.15,p.y-p.r*0.2, Math.max(0.3,p.r*wob*0.4), p.r*0.45,0,0,TAU); ctx.fill();
+        ctx.restore();
+        continue;
+      }
+      if(p.kind==="ring"){
+        ctx.strokeStyle=hexA(p.color||"#7fe9d6", a*0.7); ctx.lineWidth=3;
+        ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,TAU); ctx.stroke(); continue;
+      }
+      if(p.kind==="smoke"){
+        ctx.fillStyle=hexA("#3a4750", a*0.4);
+        ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,TAU); ctx.fill(); continue;
+      }
+      if(p.kind==="fish"){
+        const ang=Math.atan2(p.vy,p.vx);
+        ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(ang); ctx.globalAlpha=clamp(a*1.4,0,1);
+        ctx.fillStyle="#23415c";
+        ctx.beginPath(); ctx.ellipse(0,0,p.r*1.9,p.r*0.8,0,0,TAU); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(-p.r*1.8,0); ctx.lineTo(-p.r*2.7,-p.r*0.7); ctx.lineTo(-p.r*2.7,p.r*0.7); ctx.closePath(); ctx.fill();
+        ctx.fillStyle="rgba(190,233,255,.5)"; ctx.beginPath(); ctx.arc(p.r*0.7,-p.r*0.2,p.r*0.18,0,TAU); ctx.fill();
+        ctx.restore(); continue;
+      }
+      if(p.kind==="foam"){
+        ctx.fillStyle = `rgba(220,240,255,${a*0.8})`;
+      } else {
+        ctx.fillStyle = hexA(p.color||"#f2cf6b", a);
+        ctx.shadowColor = p.color||"#f2cf6b"; ctx.shadowBlur = 8;
+      }
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.r*a+0.4,0,TAU); ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+  }
+  drawTexts(ctx){
+    ctx.textAlign="center"; ctx.font="700 22px Hoefler Text, Georgia, serif";
+    for(const t of this.texts){
+      const a=clamp(t.life/t.max,0,1);
+      ctx.fillStyle=hexA(t.color||"#f2cf6b", a);
+      ctx.shadowColor="rgba(0,0,0,.6)"; ctx.shadowBlur=6;
+      ctx.fillText(t.txt, t.x, t.y);
+      ctx.shadowBlur=0;
+    }
+  }
+}
+
+/* ---------------- 5a. Ship catalogue + upgrades ---------------- */
+const SHIPS = [
+  { id:"wanderer", style:"wanderer", name:"The Wanderer",
+    tagline:"Your first deck — honest timber and a black sail, bound for any horizon.",
+    price:0, stats:{ speed:1.00, accel:1.00, turn:1.00 } },
+  { id:"qar", style:"qar", name:"Queen Anne's Revenge",
+    tagline:"Blackbeard's terror. Three masts of menace, and she comes about fast.",
+    price:900, stats:{ speed:0.97, accel:1.06, turn:1.20 } },
+  { id:"dutchman", style:"dutchman", name:"The Flying Dutchman",
+    tagline:"Crewed by the drowned. No living hull outruns her ghostly canvas.",
+    price:1500, stats:{ speed:1.13, accel:1.06, turn:1.05 } },
+  { id:"pearl", style:"pearl", name:"The Black Pearl",
+    tagline:"Black sails, gold filigree — the finest, fleetest handling on the seas.",
+    price:2400, stats:{ speed:1.10, accel:1.12, turn:1.24 } },
+  { id:"aether", style:"aether", name:"The Aether's Wake",
+    tagline:"Sails spun from sea-mist and starlight. She runs ahead of her own shadow.",
+    price:3400, stats:{ speed:1.18, accel:1.16, turn:1.26 } },
+];
+const SHIP_BY_ID = id => SHIPS.find(x=>x.id===id) || SHIPS[0];
+
+const UPGRADES = [
+  { key:"sails", name:"Better Sails", icon:"\u26F5",
+    desc:"Catch more wind: +6% top speed and quicker acceleration each rank.",
+    prices:[400, 850, 1500] },
+  { key:"hull",  name:"Reinforced Hull", icon:"\u26E8",
+    desc:"Braced timbers shrug off the storm's shove and hold momentum longer.",
+    prices:[350, 750, 1300] },
+  { key:"cargo", name:"Expanded Cargo", icon:"\u2693",
+    desc:"A deeper hold: +15% gold from every chest and salvage each rank.",
+    prices:[300, 650, 1150] },
+];
+const UPG_MAX = 3;
+
+/* ---------------- 5. Ship ---------------- */
+class Ship{
+  constructor(x,y,def,upg){
+    this.x=x; this.y=y;
+    this.angle=-Math.PI/2;          // facing north to start
+    this.vx=0; this.vy=0;
+    this.thrust=0; this.turn=0; this.desiredAngle=null;
+    this.bob=0; this.sailFlap=0; this.heel=0;
+    this.applyLoadout(def, upg);
+  }
+  // Recompute handling from the chosen ship + owned upgrades.
+  applyLoadout(def, upg){
+    this.def = def || SHIPS[0];
+    upg = upg || {sails:0,hull:0,cargo:0};
+    // Base feel: weighty, momentum-carrying, slightly slower top end than before.
+    const BASE_MAX=314, BASE_ACCEL=452, BASE_TURN=3.78, BASE_DRAG=0.918;
+    const st = this.def.stats;
+    const sailMul = 1 + 0.06*(upg.sails||0);
+    const accMul  = 1 + 0.08*(upg.sails||0);
+    this.MAX_SPEED = BASE_MAX  * st.speed * sailMul;
+    this.ACCEL     = BASE_ACCEL* st.accel * accMul;
+    this.TURN      = BASE_TURN * st.turn;
+    this.DRAG      = Math.min(0.95, BASE_DRAG + 0.012*(upg.hull||0)); // hull = more glide
+    this.stormResist = 1 - 0.26*(upg.hull||0);                        // hull = less storm shove
+  }
+  get speed(){ return Math.hypot(this.vx,this.vy); }
+  get speed01(){ return clamp(this.speed/this.MAX_SPEED,0,1); }
+
+  update(dt, particles, push){
+    // --- steering: direct, predictable; a touch crisper once under way ---
+    const turnRate = this.TURN * (0.85 + 0.15*Math.min(1, this.speed01*1.5));
+    let steer = 0;
+    if(this.desiredAngle!==null){
+      const d = angDiff(this.angle, this.desiredAngle);
+      this.angle += clamp(d, -turnRate*dt, turnRate*dt);
+      steer = clamp(d*1.6, -1, 1);
+    } else if(this.turn!==0){
+      this.angle += this.turn * turnRate * dt;
+      steer = this.turn;
+    }
+    this.angle = (this.angle + TAU) % TAU;
+    // visual heel toward the turn (juice only)
+    this.heel = lerp(this.heel, steer*0.16*Math.max(0.4,this.speed01), clamp(dt*5,0,1));
+
+    // --- thrust + weighty water resistance ---
+    if(this.thrust>0){
+      this.vx += Math.cos(this.angle)*this.ACCEL*this.thrust*dt;
+      this.vy += Math.sin(this.angle)*this.ACCEL*this.thrust*dt;
+    }
+    if(push){ const r=this.stormResist; this.vx+=push.x*r*dt; this.vy+=push.y*r*dt; }
+    const drag = Math.pow(this.DRAG, dt);
+    this.vx*=drag; this.vy*=drag;
+    const sp=this.speed;
+    if(sp>this.MAX_SPEED){ const k=this.MAX_SPEED/sp; this.vx*=k; this.vy*=k; }
+
+    this.x = clamp(this.x + this.vx*dt, 40, WORLD-40);
+    this.y = clamp(this.y + this.vy*dt, 40, WORLD-40);
+    this.bob += dt*(2 + this.speed01*4);
+    this.sailFlap += dt*(1 + this.speed01*3);
+
+    // --- wake foam from the stern ---
+    if(this.speed>46){
+      const sx=this.x-Math.cos(this.angle)*18, sy=this.y-Math.sin(this.angle)*18;
+      if(Math.random() < this.speed01*0.9 + 0.12){
+        const back=this.angle+Math.PI;
+        particles.foam(sx+rand(-5,5), sy+rand(-5,5),
+          Math.cos(back)*30 + this.vx*0.1, Math.sin(back)*30 + this.vy*0.1);
+      }
+    }
+  }
+
+  /* ---- shared art helpers (ship faces "up": bow at -y) ---- */
+  _hull(ctx, w, c1,c2,c3, trim, bowY=-34, sternY=30){
+    const g=ctx.createLinearGradient(-w,0,w,0);
+    g.addColorStop(0,c1); g.addColorStop(.5,c2); g.addColorStop(1,c1);
+    ctx.fillStyle=g;
+    ctx.beginPath();
+    ctx.moveTo(0,bowY);
+    ctx.quadraticCurveTo(w, bowY*0.42, w*0.9, sternY*0.5);
+    ctx.quadraticCurveTo(w*0.82, sternY, 0, sternY);
+    ctx.quadraticCurveTo(-w*0.82, sternY, -w*0.9, sternY*0.5);
+    ctx.quadraticCurveTo(-w, bowY*0.42, 0, bowY);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle=trim; ctx.lineWidth=2.2; ctx.stroke();
+    // deck
+    ctx.fillStyle=c3;
+    ctx.beginPath();
+    ctx.moveTo(0,bowY*0.7);
+    ctx.quadraticCurveTo(w*0.6, bowY*0.18, w*0.58, sternY*0.46);
+    ctx.quadraticCurveTo(w*0.5, sternY*0.8, 0, sternY*0.82);
+    ctx.quadraticCurveTo(-w*0.5, sternY*0.8, -w*0.58, sternY*0.46);
+    ctx.quadraticCurveTo(-w*0.6, bowY*0.18, 0, bowY*0.7);
+    ctx.closePath(); ctx.fill();
+    // plank shading
+    ctx.strokeStyle="rgba(0,0,0,.16)"; ctx.lineWidth=1;
+    for(let i=0;i<3;i++){ const yy=bowY*0.45 + i*9; ctx.beginPath(); ctx.moveTo(-w*0.5,yy); ctx.lineTo(w*0.5,yy); ctx.stroke(); }
+  }
+  _mast(ctx,y0,y1,col){ ctx.strokeStyle=col||"#23170a"; ctx.lineWidth=2.6; ctx.lineCap="round";
+    ctx.beginPath(); ctx.moveTo(0,y0); ctx.lineTo(0,y1); ctx.stroke(); }
+  _sail(ctx, cy, h, w, billow, top, bot, alpha, ragged){
+    ctx.save();
+    if(alpha!=null) ctx.globalAlpha*=alpha;
+    const yT=cy-h/2, yB=cy+h/2;
+    const g=ctx.createLinearGradient(-w,0,w,0);
+    g.addColorStop(0,top); g.addColorStop(.55,bot); g.addColorStop(1,top);
+    ctx.fillStyle=g;
+    ctx.beginPath();
+    ctx.moveTo(0,yT);
+    ctx.quadraticCurveTo(billow, cy, 0, yB);
+    if(ragged){ // tattered lower edge
+      ctx.lineTo(-1.5, yB-3); ctx.lineTo(-billow*0.18, yB-7);
+    }
+    ctx.quadraticCurveTo(-billow*0.22, cy, 0, yT);
+    ctx.closePath(); ctx.fill();
+    // seams
+    ctx.strokeStyle="rgba(0,0,0,.14)"; ctx.lineWidth=0.8;
+    for(let i=1;i<3;i++){ const yy=yT+(yB-yT)*i/3;
+      ctx.beginPath(); ctx.moveTo(0,yy); ctx.quadraticCurveTo(billow*(1-i*0.12), yy+1, 0, yy); ctx.stroke(); }
+    // yard
+    ctx.strokeStyle="#23170a"; ctx.lineWidth=1.6;
+    ctx.beginPath(); ctx.moveTo(-w*0.5,yT); ctx.lineTo(w*0.5,yT); ctx.stroke();
+    ctx.restore();
+  }
+  _flag(ctx,y,color){
+    const f=Math.sin(this.sailFlap*1.6)*2;
+    ctx.fillStyle=color;
+    ctx.beginPath(); ctx.moveTo(0,y); ctx.quadraticCurveTo(8,y+f,13,y+2); ctx.quadraticCurveTo(8,y+4,0,y+5); ctx.closePath(); ctx.fill();
+  }
+  _skull(ctx,cx,cy,r,light,dark){
+    ctx.fillStyle=light; ctx.beginPath(); ctx.arc(cx,cy,r,0,TAU); ctx.fill();
+    ctx.fillStyle=dark;
+    ctx.beginPath(); ctx.arc(cx-r*0.4,cy-r*0.12,r*0.26,0,TAU); ctx.arc(cx+r*0.4,cy-r*0.12,r*0.26,0,TAU); ctx.fill();
+    ctx.fillRect(cx-r*0.12, cy+r*0.18, r*0.24, r*0.5);
+    ctx.strokeStyle=light; ctx.lineWidth=Math.max(1,r*0.24); ctx.lineCap="round";
+    ctx.beginPath();
+    ctx.moveTo(cx-r*1.1,cy+r*1.15); ctx.lineTo(cx+r*1.1,cy+r*1.7);
+    ctx.moveTo(cx+r*1.1,cy+r*1.15); ctx.lineTo(cx-r*1.1,cy+r*1.7);
+    ctx.stroke();
+  }
+
+  draw(ctx){
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    const bobY=Math.sin(this.bob)*1.4;
+    ctx.translate(0,bobY);
+    ctx.rotate(this.angle + Math.PI/2);
+    // fake roll/heel
+    const lean=this.heel||0;
+    ctx.translate(lean*6,0);
+    ctx.scale(1-Math.abs(lean)*0.10, 1);
+    // soft water shadow
+    ctx.fillStyle="rgba(0,0,0,.30)";
+    ctx.beginPath(); ctx.ellipse(2,9,17,31,0,0,TAU); ctx.fill();
+
+    const sp=this.speed01, billow=7 + sp*11 + Math.sin(this.sailFlap)*1.6;
+    switch(this.def.style){
+      case "qar":      this._drawQAR(ctx,billow); break;
+      case "dutchman": this._drawDutchman(ctx,billow); break;
+      case "pearl":    this._drawPearl(ctx,billow); break;
+      case "aether":   this._drawAether(ctx,billow); break;
+      default:         this._drawWanderer(ctx,billow);
+    }
+    ctx.restore();
+  }
+
+  _drawWanderer(ctx,billow){
+    this._hull(ctx,15,"#3a2410","#7a4f24","#caa067","#2a1908");
+    // rigging
+    ctx.strokeStyle="rgba(20,12,4,.5)"; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(0,-22); ctx.lineTo(-9,18); ctx.moveTo(0,-22); ctx.lineTo(9,18); ctx.stroke();
+    // foresail (canvas tan)
+    ctx.save(); ctx.translate(0,-2); this._sail(ctx,-16,16,16,billow*0.6,"#e9dcb6","#c9b483"); ctx.restore();
+    this._mast(ctx,18,-24);
+    // mainsail (charcoal) with jolly roger
+    this._sail(ctx,-2,30,21,billow,"#2b2f37","#10131a");
+    this._skull(ctx,0,-5,3.4,"rgba(236,236,242,.92)","#10131a");
+    // stern lantern
+    ctx.fillStyle="#ffd27a"; ctx.shadowColor="#ffcf6a"; ctx.shadowBlur=8;
+    ctx.beginPath(); ctx.arc(0,21,2.2,0,TAU); ctx.fill(); ctx.shadowBlur=0;
+    // pennant
+    this._mast(ctx,-24,-31); this._flag(ctx,-31,"#9c3b2e");
+  }
+
+  _drawQAR(ctx,billow){   // Blackbeard — black hull, crimson sails, three masts, cannon
+    this._hull(ctx,16.5,"#0f0c0a","#241a13","#3a2c1f","#7a1f1a");
+    // gold gunwale + cannon ports
+    ctx.strokeStyle="#b9852c"; ctx.lineWidth=1.4;
+    ctx.beginPath(); ctx.moveTo(-14,2); ctx.quadraticCurveTo(0,6,14,2); ctx.stroke();
+    ctx.fillStyle="#0a0807";
+    for(const px of [-9,-2,5,11]){ ctx.beginPath(); ctx.arc(px,4,1.7,0,TAU); ctx.fill(); }
+    // rigging
+    ctx.strokeStyle="rgba(10,6,4,.6)"; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(0,-26); ctx.lineTo(-11,18); ctx.moveTo(0,-26); ctx.lineTo(11,18); ctx.stroke();
+    // foresail + mizzen (smaller, dark crimson)
+    ctx.save(); ctx.translate(0,12); this._mast(ctx,8,-12); this._sail(ctx,-3,16,15,billow*0.5,"#3a1414","#150909"); ctx.restore();
+    ctx.save(); ctx.translate(0,-20); this._mast(ctx,6,-10); this._sail(ctx,-2,14,14,billow*0.5,"#3a1414","#150909"); ctx.restore();
+    // main mast + big crimson sail
+    this._mast(ctx,18,-30);
+    this._sail(ctx,-6,32,23,billow,"#4a1414","#160808");
+    // skull & crossbones (white on the dark sail)
+    this._skull(ctx,0,-9,4.2,"#efe9e0","#160808");
+    // lit fuses near the bow (Blackbeard's smoke)
+    for(const fx of [-4,4]){ ctx.fillStyle="#ff9b3d"; ctx.shadowColor="#ff7a1a"; ctx.shadowBlur=9;
+      ctx.beginPath(); ctx.arc(fx,-30,1.5+Math.random()*0.8,0,TAU); ctx.fill(); }
+    ctx.shadowBlur=0;
+    // black flag pennant
+    this._mast(ctx,-30,-38); this._flag(ctx,-38,"#0c0a09");
+  }
+
+  _drawDutchman(ctx,billow){  // ghostly green, ethereal glow, tattered sails
+    // spectral aura
+    const glow=ctx.createRadialGradient(0,-4,4,0,-4,46);
+    glow.addColorStop(0,"rgba(110,255,200,.30)"); glow.addColorStop(1,"rgba(110,255,200,0)");
+    ctx.fillStyle=glow; ctx.beginPath(); ctx.arc(0,-4,46,0,TAU); ctx.fill();
+    ctx.save(); ctx.globalAlpha=0.9;
+    this._hull(ctx,15.5,"#0c241d","#1c4a3d","#2c6354","#0e3a2e");
+    // barnacle / weed speckle + glowing portholes
+    ctx.fillStyle="rgba(150,255,210,.5)";
+    for(const py of [-2,6,14]){ ctx.beginPath(); ctx.arc(-7,py,1.3,0,TAU); ctx.arc(7,py,1.3,0,TAU); ctx.fill(); }
+    // rigging (ghostly)
+    ctx.strokeStyle="rgba(150,255,210,.25)"; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(0,-24); ctx.lineTo(-10,18); ctx.moveTo(0,-24); ctx.lineTo(10,18); ctx.stroke();
+    // tattered translucent sails
+    ctx.save(); ctx.translate(0,10); this._mast(ctx,8,-12,"#16403a"); this._sail(ctx,-3,16,15,billow*0.55,"#bdf4dc","#5fb89e",0.5,true); ctx.restore();
+    this._mast(ctx,18,-28,"#16403a");
+    this._sail(ctx,-4,30,22,billow,"#d7fff0","#74c9ac",0.52,true);
+    // faint skull glow on the sail
+    ctx.globalAlpha=0.85; this._skull(ctx,0,-7,3.6,"rgba(190,255,225,.9)","#0c241d"); ctx.globalAlpha=0.9;
+    this._mast(ctx,-28,-35,"#16403a"); this._flag(ctx,-35,"rgba(150,255,210,.7)");
+    ctx.restore();
+  }
+
+  _drawPearl(ctx,billow){  // elegant black hull, gold filigree, black sails
+    this._hull(ctx,14.5,"#0a0a0e","#1c1c26","#2a2a36","#c9a23c");
+    // gold filigree along the hull + bow scroll
+    ctx.strokeStyle="#e9c86b"; ctx.lineWidth=1.3;
+    ctx.beginPath(); ctx.moveTo(-12,0); ctx.quadraticCurveTo(0,5,12,0); ctx.stroke();
+    ctx.beginPath(); ctx.arc(0,-30,3.4,Math.PI*0.1,Math.PI*1.4); ctx.stroke();  // bow curl
+    ctx.strokeStyle="rgba(20,16,8,.5)"; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(0,-26); ctx.lineTo(-10,18); ctx.moveTo(0,-26); ctx.lineTo(10,18); ctx.stroke();
+    // sails (black, faintly tattered, elegant)
+    ctx.save(); ctx.translate(0,-22); this._mast(ctx,8,-12); this._sail(ctx,-2,16,15,billow*0.55,"#22222c","#0a0a0e",1,true); ctx.restore();
+    this._mast(ctx,18,-32);
+    this._sail(ctx,-4,33,22,billow,"#24242f","#0a0a0e",1,true);
+    // subtle gold skull
+    this._skull(ctx,0,-8,3.6,"rgba(233,200,107,.9)","#0a0a0e");
+    // gilded pennant
+    this._mast(ctx,-32,-40); this._flag(ctx,-40,"#e9c86b");
+  }
+
+  _drawAether(ctx,billow){  // sleek dark hull, pale silver-grey sails, mystical glow
+    // faint ethereal aura
+    const glow=ctx.createRadialGradient(0,-6,5,0,-6,48);
+    glow.addColorStop(0,"rgba(174,198,255,.22)"); glow.addColorStop(1,"rgba(174,198,255,0)");
+    ctx.fillStyle=glow; ctx.beginPath(); ctx.arc(0,-6,48,0,TAU); ctx.fill();
+    // dark hull, cool silver-blue trim + deck
+    this._hull(ctx,14.5,"#10131c","#1f2636","#2b3447","#9fb4d6");
+    // silver filigree sweep + bow scroll
+    ctx.strokeStyle="#cdd8ec"; ctx.lineWidth=1.2;
+    ctx.beginPath(); ctx.moveTo(-12,0); ctx.quadraticCurveTo(0,5,12,0); ctx.stroke();
+    ctx.beginPath(); ctx.arc(0,-30,3.2,Math.PI*0.1,Math.PI*1.4); ctx.stroke();
+    ctx.strokeStyle="rgba(160,180,210,.4)"; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(0,-26); ctx.lineTo(-10,18); ctx.moveTo(0,-26); ctx.lineTo(10,18); ctx.stroke();
+    // pale silver-grey sails, tall and slim, with a faint glow
+    ctx.save(); ctx.shadowColor="rgba(190,210,255,.55)"; ctx.shadowBlur=10;
+    ctx.save(); ctx.translate(0,-22); this._mast(ctx,8,-13,"#3a4150");
+      this._sail(ctx,-2,16,15,billow*0.55,"#eef2fa","#aeb7ca"); ctx.restore();
+    this._mast(ctx,18,-33,"#3a4150");
+    this._sail(ctx,-5,34,22,billow,"#e4e9f3","#9aa6bd");
+    ctx.restore();
+    // four-point starlight emblem on the mainsail (instead of a skull)
+    ctx.save(); ctx.translate(0,-8); ctx.fillStyle="rgba(200,216,250,.92)";
+    ctx.shadowColor="#bcd0ff"; ctx.shadowBlur=8;
+    const star=(R,r)=>{ ctx.beginPath();
+      for(let i=0;i<8;i++){ const ang=i/8*TAU - Math.PI/2, rad=i%2?r:R;
+        const px=Math.cos(ang)*rad, py=Math.sin(ang)*rad; i?ctx.lineTo(px,py):ctx.moveTo(px,py); }
+      ctx.closePath(); ctx.fill(); };
+    star(5,1.7); ctx.restore();
+    // silver pennant
+    this._mast(ctx,-33,-41); this._flag(ctx,-41,"#cdd8ec");
+  }
+}
+
+/* ---------------- 6. Island / Debris / GhostShip ---------------- */
+class Island{
+  constructor(opts){
+    this.x=opts.x; this.y=opts.y;
+    this.name=opts.name; this.desc=opts.desc;
+    this.value=opts.value;
+    this.echo=opts.echo;
+    this.r=opts.r;
+    this.type=opts.type||"lush";
+    this.seed=opts.seed;
+    this.looted=false;
+    this.discovered=false;
+    this.chestOpen=0;
+    this.freshness=1;       // 1 = lush & alive, 0 = looted & barren
+    this.shine=0;           // brief sparkle right after a regrow
+    this.reviveAt=null; this.questTarget=false;
+    this._build();
+  }
+  _build(){
+    const rng=makeRNG(this.seed);
+    const T=this.type;
+    // silhouette: type-driven harmonics for real shape variety
+    const cfg = {
+      lush:    {amp:[0.14,0.09,0.05], n:24, squash:0.92+rng()*0.16},
+      rocky:   {amp:[0.20,0.15,0.10], n:26, squash:0.78+rng()*0.3},
+      sandy:   {amp:[0.08,0.05,0.03], n:22, squash:0.95+rng()*0.1},
+      volcanic:{amp:[0.16,0.10,0.07], n:24, squash:0.86+rng()*0.2},
+    }[T];
+    const h=[ {f:1,a:rng()*cfg.amp[0]+cfg.amp[0]*0.5,p:rng()*TAU},
+              {f:2,a:rng()*cfg.amp[1]+cfg.amp[1]*0.4,p:rng()*TAU},
+              {f:3,a:rng()*cfg.amp[2]+cfg.amp[2]*0.3,p:rng()*TAU},
+              {f:5,a:rng()*cfg.amp[2]*0.6,p:rng()*TAU} ];
+    const sq=cfg.squash, rot=rng()*TAU;
+    const pts=[];
+    for(let i=0;i<cfg.n;i++){
+      const t=i/cfg.n*TAU;
+      let rr=1; for(const k of h) rr+=Math.sin(t*k.f+k.p)*k.a;
+      // gentle directional squash so islands aren't all circular
+      const stretch = 1 + Math.cos(t-rot)*(sq-1)*0.6;
+      pts.push({a:t, r:this.r*clamp(rr*stretch,0.5,1.5)});
+    }
+    this.shape=pts;
+
+    // palette per type
+    this.pal = ({
+      lush:    {b1:"#e7d49b",b2:"#cdb277",b3:"#9c8246",grass:"#2f6b34",grass2:"#244f27",rock:"#6c7178"},
+      rocky:   {b1:"#cdbfa3",b2:"#a99c80",b3:"#7c715a",grass:"#566b3c",grass2:"#3f5230",rock:"#7d818a"},
+      sandy:   {b1:"#f0e3bd",b2:"#e0cd97",b3:"#c2aa6f",grass:"#6f8a45",grass2:"#566f37",rock:"#9aa0a8"},
+      volcanic:{b1:"#b9a98a",b2:"#8f7f66",b3:"#5f5342",grass:"#3a4a32",grass2:"#2a3725",rock:"#3c3a3d"},
+    })[T];
+
+    // palms — count + clustering by type
+    const palmCount = {lush:3+Math.floor(rng()*4), sandy:1+Math.floor(rng()*3), rocky:Math.floor(rng()*3), volcanic:Math.floor(rng()*2)}[T];
+    this.palms=[];
+    for(let i=0;i<palmCount;i++){
+      const a=rng()*TAU, d=this.r*(0.12 + rng()*0.4);
+      this.palms.push({ x:Math.cos(a)*d, y:Math.sin(a)*d,
+        lean:(rng()-0.5)*0.6, h:this.r*(0.24+rng()*0.18),
+        fronds:5+Math.floor(rng()*3), seed:rng(), coco:rng()>0.5 });
+    }
+    // rocks
+    const rockCount = {lush:1+Math.floor(rng()*2), sandy:1+Math.floor(rng()*2), rocky:3+Math.floor(rng()*3), volcanic:2+Math.floor(rng()*3)}[T];
+    this.rocks=[];
+    for(let i=0;i<rockCount;i++){
+      const a=rng()*TAU, d=rng()*this.r*0.6;
+      this.rocks.push({ x:Math.cos(a)*d, y:Math.sin(a)*d, s:this.r*(0.07+rng()*0.12), seed:rng() });
+    }
+    this.peakH = T==="volcanic" ? this.r*(0.42+rng()*0.18) : 0;
+    this.smoke = rng();
+  }
+  // ease toward dead (looted) or alive (reset), so the change is gradual
+  step(dt){
+    const target=this.looted?0:1, rate=this.looted?1.7:0.5;
+    this.freshness += (target-this.freshness)*Math.min(1,dt*rate);
+    if(this.shine>0) this.shine=Math.max(0,this.shine-dt);
+  }
+  draw(ctx, t){
+    ctx.save();
+    ctx.translate(this.x,this.y);
+    const P=this.pal;
+    const fr=this.freshness;
+
+    // drop shadow on the water (depth)
+    ctx.fillStyle="rgba(2,10,18,.35)";
+    ctx.beginPath();
+    for(let i=0;i<=this.shape.length;i++){ const p=this.shape[i%this.shape.length];
+      const x=Math.cos(p.a)*p.r+5, y=Math.sin(p.a)*p.r+8; i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);} 
+    ctx.closePath(); ctx.fill();
+
+    // animated foam ring
+    ctx.lineWidth=6; ctx.strokeStyle="rgba(225,245,255,.35)";
+    ctx.beginPath();
+    for(let i=0;i<=this.shape.length;i++){ const p=this.shape[i%this.shape.length];
+      const rr=p.r+10+Math.sin(t*1.5+p.a*3)*4;
+      const x=Math.cos(p.a)*rr, y=Math.sin(p.a)*rr; i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);} 
+    ctx.closePath(); ctx.stroke();
+
+    // beach
+    const beach=ctx.createRadialGradient(0,0,this.r*0.2,0,0,this.r*1.05);
+    beach.addColorStop(0,P.b1); beach.addColorStop(0.7,P.b2); beach.addColorStop(1,P.b3);
+    ctx.fillStyle=beach;
+    ctx.beginPath();
+    for(let i=0;i<=this.shape.length;i++){ const p=this.shape[i%this.shape.length];
+      const x=Math.cos(p.a)*p.r, y=Math.sin(p.a)*p.r; i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);} 
+    ctx.closePath(); ctx.fill();
+
+    // grass interior + lighter crown for elevation
+    const grad=ctx.createRadialGradient(-this.r*0.15,-this.r*0.15,this.r*0.1,0,0,this.r*0.78);
+    grad.addColorStop(0,mixHex("#7a6a44",P.grass,fr)); grad.addColorStop(1,mixHex("#564829",P.grass2,fr));
+    ctx.fillStyle=grad;
+    ctx.beginPath();
+    for(let i=0;i<=this.shape.length;i++){ const p=this.shape[i%this.shape.length];
+      const x=Math.cos(p.a)*p.r*0.72, y=Math.sin(p.a)*p.r*0.72; i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);} 
+    ctx.closePath(); ctx.fill();
+    // dug-over pits when the isle has been plundered
+    if(fr<0.75){ ctx.fillStyle=hexA("#2c2113",(1-fr)*0.5);
+      for(const rk of this.rocks){ ctx.beginPath();
+        ctx.ellipse(rk.x*0.7+5, rk.y*0.7+4, this.r*0.06, this.r*0.04,0,0,TAU); ctx.fill(); } }
+
+    // volcanic peak
+    if(this.peakH>0){
+      ctx.fillStyle=P.rock;
+      ctx.beginPath(); ctx.moveTo(-this.r*0.22,0); ctx.lineTo(0,-this.peakH); ctx.lineTo(this.r*0.22,0); ctx.closePath(); ctx.fill();
+      ctx.fillStyle="rgba(255,255,255,.12)";
+      ctx.beginPath(); ctx.moveTo(0,-this.peakH); ctx.lineTo(this.r*0.22,0); ctx.lineTo(this.r*0.05,0); ctx.closePath(); ctx.fill();
+      ctx.fillStyle="rgba(255,120,40,.5)";
+      ctx.beginPath(); ctx.arc(0,-this.peakH+2,2.4,0,TAU); ctx.fill();
+      // wisp of smoke
+      ctx.fillStyle="rgba(180,180,185,.18)";
+      for(let i=0;i<3;i++){ const yy=-this.peakH-6-i*9, off=Math.sin(t*0.8+i+this.smoke*6)*5;
+        ctx.beginPath(); ctx.arc(off,yy,4+i*2,0,TAU); ctx.fill(); }
+    }
+
+    // rocks
+    for(const rk of this.rocks){
+      ctx.save(); ctx.translate(rk.x,rk.y);
+      ctx.fillStyle=P.rock;
+      ctx.beginPath();
+      ctx.moveTo(-rk.s,rk.s*0.4); ctx.lineTo(-rk.s*0.4,-rk.s); ctx.lineTo(rk.s*0.6,-rk.s*0.6); ctx.lineTo(rk.s,rk.s*0.5);
+      ctx.closePath(); ctx.fill();
+      ctx.fillStyle="rgba(255,255,255,.14)";
+      ctx.beginPath(); ctx.moveTo(-rk.s*0.4,-rk.s); ctx.lineTo(rk.s*0.6,-rk.s*0.6); ctx.lineTo(0,-rk.s*0.2); ctx.fill();
+      ctx.restore();
+    }
+
+    // palms
+    for(const pm of this.palms){
+      ctx.save(); ctx.translate(pm.x,pm.y);
+      const sway=Math.sin(t*1.3+pm.seed*10)*0.08;
+      ctx.strokeStyle="#6b4a26"; ctx.lineWidth=Math.max(2,pm.h*0.13); ctx.lineCap="round";
+      ctx.beginPath(); ctx.moveTo(0,0);
+      ctx.quadraticCurveTo((pm.lean+sway)*pm.h*0.6,-pm.h*0.6,(pm.lean+sway)*pm.h,-pm.h); ctx.stroke();
+      const tx=(pm.lean+sway)*pm.h, ty=-pm.h;
+      if(pm.coco){ ctx.fillStyle="#5b3d1f"; ctx.beginPath(); ctx.arc(tx-1,ty+2,1.8,0,TAU); ctx.arc(tx+2,ty+1,1.6,0,TAU); ctx.fill(); }
+      ctx.strokeStyle=mixHex("#7a5a2a","#2f7d3f",fr); ctx.lineWidth=Math.max(2,pm.h*0.1);
+      ctx.save(); ctx.globalAlpha*=(0.22+0.78*fr);
+      const flen=0.30+0.34*fr, droop=(1-fr)*0.55;
+      for(let f=0;f<pm.fronds;f++){
+        const a=-Math.PI/2+(f/(pm.fronds-1)-0.5)*2.5+sway*2+droop;
+        ctx.beginPath(); ctx.moveTo(tx,ty);
+        ctx.quadraticCurveTo(tx+Math.cos(a)*pm.h*0.3, ty+Math.sin(a)*pm.h*0.3,
+                             tx+Math.cos(a)*pm.h*flen, ty+Math.sin(a)*pm.h*flen+4+droop*pm.h*0.3);
+        ctx.stroke();
+      }
+      ctx.restore();
+      ctx.restore();
+    }
+
+    // ready-to-plunder signal: soft living aura + the gold X (brighter just after a regrow)
+    if(!this.looted && this.discovered){
+      const pulse=0.5+Math.sin(t*3)*0.5;
+      const aura=(0.14 + this.shine*0.5) * (0.5+pulse*0.5) * clamp(fr,0,1);
+      const ag=ctx.createRadialGradient(0,0,this.r*0.4,0,0,this.r*1.18);
+      ag.addColorStop(0,hexA("#7fe9b0",0)); ag.addColorStop(0.72,hexA("#7fe9b0",aura)); ag.addColorStop(1,hexA("#7fe9b0",0));
+      ctx.fillStyle=ag; ctx.beginPath(); ctx.arc(0,0,this.r*1.18,0,TAU); ctx.fill();
+      ctx.strokeStyle=hexA("#f2cf6b",0.5+pulse*0.4); ctx.lineWidth=3;
+      ctx.beginPath(); ctx.moveTo(-7,-7); ctx.lineTo(7,7); ctx.moveTo(7,-7); ctx.lineTo(-7,7); ctx.stroke();
+    }
+    // delivery destination marker
+    if(this.questTarget){
+      const pulse=0.5+Math.sin(t*4)*0.5;
+      ctx.strokeStyle=hexA("#39d6c0",0.55+pulse*0.4); ctx.lineWidth=3;
+      ctx.beginPath(); ctx.arc(0,-this.r*0.15, 13+pulse*3, 0, TAU); ctx.stroke();
+      ctx.fillStyle=hexA("#bff7ec",0.95); ctx.font="700 15px Hoefler Text, Georgia, serif"; ctx.textAlign="center";
+      ctx.fillText("\u2726", 0, -this.r*0.15+5);
+    }
+    ctx.restore();
+  }
+
+  // smoother, juicier chest (screen space)
+  drawChest(ctx, cx, cy, scale, t){
+    ctx.save();
+    ctx.translate(cx,cy); ctx.scale(scale,scale);
+    const raw=this.chestOpen;
+    const open=raw*raw*(3-2*raw);   // smoothstep easing
+    // glow when opening
+    if(open>0){
+      const g=ctx.createRadialGradient(0,4,4,0,4,120);
+      g.addColorStop(0,hexA("#ffe7a0",0.95*open)); g.addColorStop(0.5,hexA("#ffcf6a",0.4*open)); g.addColorStop(1,hexA("#ffe7a0",0));
+      ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,4,120,0,TAU); ctx.fill();
+    }
+    // base box
+    ctx.fillStyle="#5a3a16";
+    ctx.beginPath(); ctx.roundRect(-60,-10,120,60,8); ctx.fill();
+    ctx.strokeStyle="#2f1e0a"; ctx.lineWidth=4; ctx.stroke();
+    // gold pile rising as it opens
+    if(open>0.15){
+      ctx.save(); ctx.beginPath(); ctx.roundRect(-56,-8,112,56,6); ctx.clip();
+      ctx.fillStyle="#f2cf6b";
+      for(let i=0;i<10;i++){ const a=-Math.PI + i/9*Math.PI;
+        const yy=18 - open*16 + Math.sin(t*4+i)*1.5;
+        ctx.beginPath(); ctx.arc(Math.cos(a)*34, yy, 6,0,TAU); ctx.fill(); }
+      ctx.fillStyle="#ffe7a0";
+      for(let i=0;i<6;i++){ const a=-Math.PI + i/5*Math.PI;
+        ctx.beginPath(); ctx.arc(Math.cos(a)*22, 12-open*14, 4,0,TAU); ctx.fill(); }
+      ctx.restore();
+    }
+    // bands
+    ctx.fillStyle="#c8962f"; ctx.fillRect(-60,8,120,8); ctx.fillRect(-8,-10,16,60);
+    // lid (eased rotation around back hinge)
+    ctx.save();
+    ctx.translate(0,-10); ctx.rotate(-open*1.15);
+    ctx.fillStyle="#6b4421";
+    ctx.beginPath(); ctx.roundRect(-60,-34,120,38,8); ctx.fill();
+    ctx.strokeStyle="#2f1e0a"; ctx.lineWidth=4; ctx.stroke();
+    ctx.fillStyle="#c8962f"; ctx.fillRect(-8,-34,16,38);
+    ctx.restore();
+    // lock (only while closed)
+    if(open<0.1){ ctx.fillStyle="#e8b94a"; ctx.fillRect(-9,2,18,14);
+      ctx.fillStyle="#2f1e0a"; ctx.fillRect(-2,7,4,5); }
+    // sparkles on open
+    if(open>0.4){ ctx.fillStyle=hexA("#fff6d8",0.9*open);
+      for(let i=0;i<5;i++){ const a=t*2+i, rr=40+Math.sin(t*3+i)*10;
+        ctx.beginPath(); ctx.arc(Math.cos(a)*rr, -10+Math.sin(a*1.3)*rr*0.4, 1.6,0,TAU); ctx.fill(); } }
+    ctx.restore();
+  }
+}
+
+
+class Debris{
+  constructor(x,y,big){ this.x=x; this.y=y; this.big=!!big;
+    this.gold = big ? Math.floor(rand(70,150)) : Math.floor(rand(10,32));
+    this.spin=rand(0,TAU); this.dead=false; }
+  update(dt){ this.spin+=dt*0.6; this.x+=Math.sin(this.spin*0.7)*4*dt; }
+  draw(ctx,t){
+    ctx.save(); ctx.translate(this.x,this.y); ctx.rotate(Math.sin(this.spin)*0.2);
+    ctx.translate(0, Math.sin(t*2+this.x)*2);
+    const sc=this.big?1.5:1;
+    if(this.big){ ctx.shadowColor="#ffcf6a"; ctx.shadowBlur=10; }
+    ctx.scale(sc,sc);
+    ctx.fillStyle=this.big?"#6b4a1c":"#5a3a16"; ctx.strokeStyle="#2f1e0a"; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.roundRect(-12,-9,24,18,3); ctx.fill(); ctx.stroke();
+    ctx.strokeStyle=this.big?"#ffd98a":"#caa067"; ctx.beginPath();
+    ctx.moveTo(-12,0); ctx.lineTo(12,0); ctx.moveTo(0,-9); ctx.lineTo(0,9); ctx.stroke();
+    if(this.big){ ctx.shadowBlur=0; ctx.fillStyle="#ffe7a0"; ctx.beginPath(); ctx.arc(0,0,2.4,0,TAU); ctx.fill(); }
+    ctx.restore();
+  }
+}
+
+class GhostShip{ // distant flavour sail that drifts across the sea
+  constructor(){
+    const edge=Math.floor(rand(0,4));
+    this.x = edge===0?0 : edge===1?WORLD : rand(0,WORLD);
+    this.y = edge<2 ? rand(0,WORLD) : (edge===2?0:WORLD);
+    const a = Math.atan2(WORLD/2 - this.y, WORLD/2 - this.x) + rand(-0.6,0.6);
+    this.vx=Math.cos(a)*rand(20,40); this.vy=Math.sin(a)*rand(20,40);
+    this.angle=a; this.life=rand(40,80);
+  }
+  update(dt){ this.x+=this.vx*dt; this.y+=this.vy*dt; this.life-=dt; }
+  get dead(){ return this.life<=0 || this.x<-200||this.x>WORLD+200||this.y<-200||this.y>WORLD+200; }
+  draw(ctx){
+    ctx.save(); ctx.globalAlpha=0.4; ctx.translate(this.x,this.y); ctx.rotate(this.angle+Math.PI/2);
+    ctx.fillStyle="#0c1c2e";
+    ctx.beginPath(); ctx.moveTo(0,-18); ctx.quadraticCurveTo(8,0,6,12); ctx.lineTo(-6,12); ctx.quadraticCurveTo(-8,0,0,-18); ctx.fill();
+    ctx.fillStyle="rgba(20,28,40,.9)";
+    ctx.beginPath(); ctx.moveTo(0,-10); ctx.quadraticCurveTo(7,-2,0,6); ctx.quadraticCurveTo(-7,-2,0,-10); ctx.fill();
+    ctx.restore();
+  }
+}
+
+class Merchant{ // a lone trader that drifts by and hails the player
+  constructor(x,y){
+    this.x=x; this.y=y; this.angle=rand(0,TAU);
+    const sp=rand(9,16); this.vx=Math.cos(this.angle)*sp; this.vy=Math.sin(this.angle)*sp;
+    this.bob=rand(0,TAU); this.life=82; this.done=false; this.hailed=false;
+    this.shady = Math.random()<0.32;
+    this.kind = ["trade","bargain","delivery"][Math.floor(rand(0,3))];
+    this._dest=null; this._reward=0;
+  }
+  update(dt){ this.x+=this.vx*dt; this.y+=this.vy*dt; this.bob+=dt*2; this.life-=dt;
+    this.angle=Math.atan2(this.vy,this.vx); }
+  get dead(){ return this.done || this.life<=0; }
+  draw(ctx,time){
+    ctx.save(); ctx.translate(this.x, this.y+Math.sin(this.bob)*1.5);
+    ctx.save(); ctx.rotate(this.angle+Math.PI/2);
+    // warm lantern halo
+    ctx.fillStyle="rgba(255,200,110,.12)"; ctx.beginPath(); ctx.arc(0,-2,30,0,TAU); ctx.fill();
+    // plump trader hull
+    ctx.fillStyle="#6a4a24"; ctx.strokeStyle="#2f1e0a"; ctx.lineWidth=2.4;
+    ctx.beginPath(); ctx.moveTo(0,-22); ctx.quadraticCurveTo(15,-6,13,16);
+    ctx.quadraticCurveTo(0,24,-13,16); ctx.quadraticCurveTo(-15,-6,0,-22); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle="#9a7038"; ctx.beginPath(); ctx.ellipse(0,2,8,15,0,0,TAU); ctx.fill();
+    // mast + warm sail
+    ctx.strokeStyle="#3a2a16"; ctx.lineWidth=2.6; ctx.beginPath(); ctx.moveTo(0,16); ctx.lineTo(0,-20); ctx.stroke();
+    const billow=6+Math.sin(time*2)*2;
+    const g=ctx.createLinearGradient(-14,0,14,0);
+    g.addColorStop(0,"#caa24a"); g.addColorStop(.5,"#e8c873"); g.addColorStop(1,"#caa24a");
+    ctx.fillStyle=g;
+    ctx.beginPath(); ctx.moveTo(0,-18); ctx.quadraticCurveTo(billow+13,-2,0,14); ctx.quadraticCurveTo(-3,-2,0,-18); ctx.fill();
+    ctx.strokeStyle="rgba(90,60,20,.5)"; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(0,-9); ctx.lineTo(9,-8); ctx.moveTo(0,1); ctx.lineTo(10,2); ctx.stroke();
+    ctx.fillStyle="#39d6c0"; ctx.beginPath(); ctx.moveTo(0,-20); ctx.lineTo(8,-18); ctx.lineTo(0,-16); ctx.fill();
+    ctx.restore();
+    // hail bubble (upright)
+    if(!this.hailed){
+      const by=-40+Math.sin(time*3)*2;
+      ctx.translate(0,by);
+      ctx.fillStyle="rgba(20,14,6,.82)"; ctx.strokeStyle=hexA("#f2cf6b",0.85); ctx.lineWidth=1.5;
+      ctx.beginPath(); ctx.roundRect(-13,-13,26,22,6); ctx.fill(); ctx.stroke();
+      ctx.fillStyle="#ffe7a0"; ctx.font="700 15px Hoefler Text, Georgia, serif"; ctx.textAlign="center";
+      ctx.fillText("\u2696", 0, 3);
+    }
+    ctx.restore();
+  }
+}
+
+/* ---------------- 6a. The Kraken ---------------- */
+const KRAKEN_ECHO = [
+  "I felt the deep open one vast eye, and knew the sea remembers every name.",
+  "From the black trench it rose — and the water itself seemed to hold its breath.",
+  "They say the beast guards a grief older than the tides. Today it let me pass.",
+];
+class Kraken{
+  constructor(x,y){
+    this.x=x; this.y=y;
+    this.hp=6; this.maxhp=6; this.hitR=98;
+    this.rise=0; this.state="rising"; this.t=rand(0,TAU);
+    this.flinch=0; this._rewarded=false; this.eyeGlow=0;
+    this.atk={phase:"none",t:0,tx:0,ty:0}; this.attackCd=rand(2.0,3.0);
+    this._strikeReady=false; this._strikePt={x:0,y:0};
+    this.tentacles=[]; const n=6;
+    for(let i=0;i<n;i++){
+      const a=(i/n)*TAU + rand(-0.18,0.18);
+      this.tentacles.push({ a, len:96+rand(0,58), phase:rand(0,TAU), sway:0.7+rand(0,0.6), reach:0.78+rand(0,0.5) });
+    }
+  }
+  hit(){ if(this.state==="defeated"||this.state==="leaving") return;
+    this.hp=Math.max(0,this.hp-1); this.flinch=0.3; if(this.state==="rising") this.state="fighting"; }
+  update(dt,ship){
+    this.t+=dt; this.flinch=Math.max(0,this.flinch-dt);
+    if(this.state==="leaving") this.rise=Math.max(0,this.rise-dt*0.8);
+    else { this.rise=Math.min(1,this.rise+dt*0.95); if(this.rise>0.55&&this.state==="rising") this.state="fighting"; }
+    this.eyeGlow=0.5+Math.sin(this.t*3)*0.3;
+    // telegraphed tentacle attacks while actively fighting
+    if(this.state==="fighting" && ship){
+      const A=this.atk;
+      if(A.phase==="none"){ this.attackCd-=dt;
+        if(this.attackCd<=0){ A.phase="wind"; A.t=0.78; A.tx=ship.x; A.ty=ship.y; } }
+      else if(A.phase==="wind"){ A.t-=dt;
+        if(A.t<=0){ A.phase="strike"; A.t=0.26; this._strikeReady=true; this._strikePt={x:A.tx,y:A.ty}; } }
+      else { A.t-=dt; if(A.t<=0){ A.phase="none"; this.attackCd=rand(2.4,3.6); } }
+    } else { this.atk.phase="none"; }
+  }
+  draw(ctx,time){
+    const e=this.rise; if(e<=0.001) return;
+    const fl=this.flinch>0?Math.sin(this.flinch*42)*4:0;
+    ctx.save(); ctx.translate(this.x+fl,this.y);
+    // surface disturbance ring
+    ctx.strokeStyle=hexA("#7fe9d6",0.22*e); ctx.lineWidth=3;
+    ctx.beginPath(); ctx.ellipse(0,20,this.hitR*1.25,this.hitR*0.52,0,0,TAU); ctx.stroke();
+    // tentacles behind
+    for(const T of this.tentacles) this._tentacle(ctx,T,e,time,true);
+    // mantle / body
+    const R=74*e;
+    const grd=ctx.createRadialGradient(-R*0.3,-R*0.45,R*0.2,0,0,R*1.25);
+    grd.addColorStop(0,"#2c5258"); grd.addColorStop(0.6,"#163036"); grd.addColorStop(1,"#091a20");
+    ctx.fillStyle=grd;
+    ctx.beginPath(); ctx.moveTo(0,-R*1.18);
+    ctx.quadraticCurveTo(R*1.06,-R*0.7, R*0.92,R*0.2);
+    ctx.quadraticCurveTo(R*0.7,R*0.72, 0,R*0.58);
+    ctx.quadraticCurveTo(-R*0.7,R*0.72, -R*0.92,R*0.2);
+    ctx.quadraticCurveTo(-R*1.06,-R*0.7, 0,-R*1.18); ctx.fill();
+    // mottled spots
+    ctx.fillStyle=hexA("#3c6a6a",0.45);
+    for(let i=0;i<7;i++){ const a=i/7*TAU; ctx.beginPath();
+      ctx.arc(Math.cos(a)*R*0.5, Math.sin(a)*R*0.4-R*0.18, R*0.085,0,TAU); ctx.fill(); }
+    // brow
+    ctx.strokeStyle="#091a20"; ctx.lineWidth=4; ctx.beginPath();
+    ctx.moveTo(-R*0.55,-R*0.22); ctx.quadraticCurveTo(0,-R*0.5,R*0.55,-R*0.22); ctx.stroke();
+    // glowing eyes
+    const eg=this.eyeGlow;
+    for(const sx of [-1,1]){
+      ctx.save(); ctx.translate(sx*R*0.34,-R*0.04);
+      ctx.shadowColor="#ffcf6a"; ctx.shadowBlur=18*eg+6;
+      ctx.fillStyle="#ffe7a0"; ctx.beginPath(); ctx.ellipse(0,0,R*0.16,R*0.2,0,0,TAU); ctx.fill();
+      ctx.shadowBlur=0; ctx.fillStyle="#180b03";
+      ctx.beginPath(); ctx.ellipse(0,0,R*0.055,R*0.135,0,0,TAU); ctx.fill();
+      ctx.restore();
+    }
+    // a couple of tentacles in front, framing the ship
+    for(const T of this.tentacles){ if(T.a>Math.PI*0.2 && T.a<Math.PI*0.8) this._tentacle(ctx,T,e,time,false); }
+    // attack telegraph + strike (target drawn relative to the body)
+    const A=this.atk;
+    if(A.phase==="wind"){
+      const px=A.tx-this.x, py=A.ty-this.y, pulse=0.5+0.5*Math.sin(time*16);
+      ctx.save();
+      ctx.strokeStyle=hexA("#ff5a46",0.45+0.4*pulse); ctx.lineWidth=3;
+      ctx.beginPath(); ctx.arc(px,py,40+pulse*8,0,TAU); ctx.stroke();
+      ctx.strokeStyle=hexA("#ff5a46",0.3); ctx.beginPath(); ctx.arc(px,py,22,0,TAU); ctx.stroke();
+      ctx.strokeStyle="#173b40"; ctx.lineWidth=15*e; ctx.lineCap="round";
+      ctx.beginPath(); ctx.moveTo(0,6); ctx.quadraticCurveTo(px*0.3,-70*e, px*0.5,py*0.3-40*e); ctx.stroke();
+      ctx.restore();
+    } else if(A.phase==="strike"){
+      const px=A.tx-this.x, py=A.ty-this.y;
+      ctx.save(); ctx.lineCap="round";
+      ctx.strokeStyle="#173b40"; ctx.lineWidth=17*e;
+      ctx.beginPath(); ctx.moveTo(0,6); ctx.quadraticCurveTo(px*0.5,py*0.5-30, px,py); ctx.stroke();
+      ctx.strokeStyle="#0e262b"; ctx.lineWidth=9*e;
+      ctx.beginPath(); ctx.moveTo(0,6); ctx.quadraticCurveTo(px*0.5,py*0.5-30, px,py); ctx.stroke();
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+  _tentacle(ctx,T,e,time,behind){
+    const reach=T.len*e*T.reach;
+    const sway=Math.sin(time*T.sway+T.phase)*0.5;
+    const bx=Math.cos(T.a)*56*e, by=Math.sin(T.a)*42*e+8;
+    ctx.save(); ctx.translate(bx,by); ctx.rotate(T.a+Math.PI/2+sway*0.4);
+    const segs=5, pts=[]; const w=12*e;
+    for(let i=1;i<=segs;i++){ const f=i/segs, len=reach*f;
+      const bend=Math.sin(time*T.sway*1.3+T.phase+f*2)*reach*0.2*f;
+      pts.push([bend,-len, w*(1-f*0.78)]); }
+    ctx.fillStyle = behind?"#0e262b":"#173b40";
+    ctx.beginPath(); ctx.moveTo(-w,0);
+    for(const [x,y,ww] of pts) ctx.lineTo(x+ww,y);
+    if(pts.length){ const [x,y]=pts[pts.length-1]; ctx.lineTo(x,y-4); }
+    for(let i=pts.length-1;i>=0;i--){ const [x,y,ww]=pts[i]; ctx.lineTo(x-ww,y); }
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle=hexA("#bcf3e6",0.45);
+    for(const [x,y,ww] of pts){ ctx.beginPath(); ctx.arc(x,y,Math.max(1,ww*0.22),0,TAU); ctx.fill(); }
+    ctx.restore();
+  }
+}
+
+/* ---------------- 7. Content pools + GameState ---------------- */
+const ISLAND_NAMES = [
+  ["Mournful Cay",       "Gulls wheel above a chapel the sea has all but swallowed."],
+  ["Ember Isle",         "Black sand still warm beneath your boots, from a fire no one lit."],
+  ["The Widow's Rocks",  "Sharp teeth of stone, where ships are said to go and confess."],
+  ["Saint Coral's Reach","A green hush, where old pilgrims left their lanterns burning low."],
+  ["Driftbone Atoll",    "A pale ring of shore around a lagoon that never wakes."],
+  ["Last Light Key",     "The sun lingers here far longer than it has any right to."],
+  ["Hollow Crown Isle",  "Kings buried their gold and their guilt in the very same ground."],
+  ["Vesper Shoal",       "Bells you cannot see ring softly when the evening tide comes in."],
+  ["Gullspar Reef",      "A maze of bright coral that has wrecked braver captains than you."],
+  ["The Drowned Bell",   "At low tide a bronze tower breaks the surface, still tolling the hour."],
+  ["Marrow Key",         "Pale dunes the colour of old bone, picked clean by patient winds."],
+  ["Sirensgate Isle",    "Sailors plug their ears here — and still they remember the song."],
+];
+const ECHOES = [
+  "The sea remembers every name the land forgot.",
+  "Beneath still water, a drowned bell tolls for no one.",
+  "You were always the storm you were so afraid of.",
+  "Salt and starlight share the same long memory.",
+  "Every horizon is only a door the brave mistake for an ending.",
+  "The deep keeps its silence the way the faithful keep their vows.",
+  "What sinks is not always lost; some treasure waits to be carried home.",
+  "Listen — the tide is a psalm the moon has never finished singing.",
+];
+const SAVE_KEY = "tides_save_v1";
+const VOYAGE_KEY = "tides_voyage_v1";   // in-progress voyage snapshot
+
+class GameState{
+  constructor(){ this.load(); this.reset(); }
+  load(){
+    let s={}; try{ s=JSON.parse(localStorage.getItem(SAVE_KEY))||{}; }catch(e){}
+    this.lifetimeGold   = s.lifetimeGold   || 0;
+    this.bestVoyage     = s.bestVoyage     || 0;
+    this.lifetimeEchoes = Array.isArray(s.lifetimeEchoes)?s.lifetimeEchoes:[];
+    this.voyages        = s.voyages        || 0;
+    this.lifetimeIsles  = s.lifetimeIsles  || 0;
+    this.ownedShips     = (Array.isArray(s.ownedShips)&&s.ownedShips.length)?s.ownedShips.slice():["wanderer"];
+    if(!this.ownedShips.includes("wanderer")) this.ownedShips.unshift("wanderer");
+    this.currentShip    = s.currentShip || "wanderer";
+    if(!this.ownedShips.includes(this.currentShip)) this.currentShip="wanderer";
+    this.upgrades       = Object.assign({sails:0,hull:0,cargo:0}, s.upgrades||{});
+  }
+  save(){
+    try{ localStorage.setItem(SAVE_KEY, JSON.stringify({
+      lifetimeGold:this.lifetimeGold, bestVoyage:this.bestVoyage,
+      lifetimeEchoes:this.lifetimeEchoes, voyages:this.voyages, lifetimeIsles:this.lifetimeIsles,
+      ownedShips:this.ownedShips, currentShip:this.currentShip, upgrades:this.upgrades
+    })); }catch(e){}
+  }
+  reset(){ this.gold=0; this.displayGold=0; this.echoesThisVoyage=[]; this.islandCount=0; this.discoveredCount=0; this.lootedCount=0; }
+  // gold is added live to both the voyage tally and the spendable treasury
+  addGold(n){ const mult=1+0.15*(this.upgrades.cargo||0); const g=Math.max(0,Math.round(n*mult));
+    this.gold+=g; this.lifetimeGold+=g; return g; }
+  spendGold(n){ if(this.lifetimeGold>=n){ this.lifetimeGold-=n; this.save(); return true; } return false; }
+  ownsShip(id){ return this.ownedShips.includes(id); }
+  buyShip(id){ const def=SHIP_BY_ID(id); if(this.ownsShip(id)) return "owned";
+    if(this.spendGold(def.price)){ this.ownedShips.push(id); this.save(); return "bought"; } return "poor"; }
+  selectShip(id){ if(this.ownsShip(id)){ this.currentShip=id; this.save(); return true; } return false; }
+  upgPrice(key){ const u=UPGRADES.find(x=>x.key===key); const lvl=this.upgrades[key]||0; return lvl>=UPG_MAX?null:u.prices[lvl]; }
+  buyUpgrade(key){ const p=this.upgPrice(key); if(p==null) return "max";
+    if(this.spendGold(p)){ this.upgrades[key]=(this.upgrades[key]||0)+1; this.save(); return "bought"; } return "poor"; }
+  bankVoyage(){
+    this.lifetimeIsles += this.discoveredCount;   // gold already banked live via addGold
+    this.voyages += 1;
+    const best = this.gold > this.bestVoyage;
+    if(best) this.bestVoyage = this.gold;
+    for(const e of this.echoesThisVoyage) if(!this.lifetimeEchoes.includes(e)) this.lifetimeEchoes.push(e);
+    this.save();
+    return best;
+  }
+}
+
+/* ---------------- 9. World generation ---------------- */
+function generateWorld(seedInput){
+  let seed;
+  if(seedInput===undefined || seedInput===null || seedInput===""){
+    seed = (Date.now() ^ (Math.random()*1e9))>>>0;
+  } else if(typeof seedInput==="number"){ seed = seedInput>>>0; }
+  else { seed = hashSeed(String(seedInput)); }
+
+  const rng = makeRNG(seed);
+  const count = 11;
+  const islands=[];
+  const names  = ISLAND_NAMES.slice().sort(()=> rng()-0.5);
+  const echoes = ECHOES.slice().sort(()=> rng()-0.5);
+  const types  = ["lush","rocky","sandy","volcanic"];
+  const margin = 540, minGap = 700;
+
+  const makeIsle = (x,y) => {
+    const idx=islands.length;
+    const [nm,desc]=names[idx % names.length];
+    return new Island({
+      x,y, name:nm, desc,
+      value: Math.floor(rand(150,440)),
+      echo: echoes[idx % echoes.length],
+      r: rand(92,158),
+      type: types[Math.floor(rng()*types.length)],
+      seed: (seed + idx*9176)>>>0
+    });
+  };
+
+  // guaranteed starter island, on-screen at spawn so land is always in sight
+  { const ang=rng()*TAU, d=440+rng()*120;
+    islands.push(makeIsle(WORLD/2+Math.cos(ang)*d, WORLD/2+Math.sin(ang)*d)); }
+
+  // the rest, spread out and a real voyage away from the start
+  let attempts=0;
+  while(islands.length<count && attempts<900){
+    attempts++;
+    const x = margin + rng()*(WORLD-margin*2);
+    const y = margin + rng()*(WORLD-margin*2);
+    if(dist(x,y, WORLD/2, WORLD/2) < 720) continue;
+    let ok=true;
+    for(const is of islands){ if(dist(x,y,is.x,is.y) < minGap){ ok=false; break; } }
+    if(!ok) continue;
+    islands.push(makeIsle(x,y));
+  }
+  return { seed, islands };
+}
+
+/* ---------------- 10–12. Game controller, rendering, loop ---------------- */
+const Game = {
+  init(){
+    this.canvas = document.getElementById("sea");
+    this.ctx = this.canvas.getContext("2d");
+    this.audio = new AudioManager();
+    this.state = new GameState();
+    this.particles = new ParticleSystem();   // world-space fx (wake, salvage, storm)
+    this.screenFx  = new ParticleSystem();    // screen-space fx (chest sparks/popups)
+    this.mode = "title";                       // title | sailing | docking | paused | summary
+    this.cam = {x:WORLD/2, y:WORLD/2};
+    this.shake = 0;
+    this.time = 0;
+    this.input = {up:false,down:false,left:false,right:false};
+    this.joy = {active:false, angle:0, mag:0, id:null};
+    this.islands=[]; this.ship=null; this.shopTab="ships";   // ready before the first render frame
+    this.debris=[]; this.ghosts=[];
+    this.storm = {phase:"calm", intensity:0, cooldown:rand(26,42), dur:0, dir:rand(0,TAU), warn:0};
+    this.cannonballs=[]; this.kraken=null; this.fireCd=0;
+    this.sinceDock=0; this.voyageTime=0; this.krakenCooldown=rand(95,150); this._bolt=null;
+    this.anchoring=false; this.focusHold=0; this.ctrlLock=0;
+    this.regrowing=false; this.merchant=null; this.merchantCd=rand(30,55); this.delivery=null;
+    this.birds=[];
+    this.dockIsland=null; this.dockRewarded=false;
+    this.debug=false;
+    this.fpsT=0; this.fpsN=0; this.fps=0;
+    this.muted=false;
+
+    this.cacheDom();
+    this.resize();
+    window.addEventListener("resize", ()=>this.resize());
+    window.addEventListener("orientationchange", ()=>setTimeout(()=>this.resize(),200));
+    this.bindUI();
+    this.bindInput();
+    this.refreshLifetime();
+    this.refreshContinue();
+
+    this.last = performance.now();
+    requestAnimationFrame(this.frame.bind(this));
+  },
+
+  cacheDom(){
+    const $ = id => document.getElementById(id);
+    this.dom = {
+      hud:$("hud"), topRight:$("topRight"), joyWrap:$("joyWrap"), joyKnob:$("joyKnob"),
+      dockBtn:$("dockBtn"), dockBtnLabel:$("dockBtnLabel"),
+      goldText:$("goldText"), echoText:$("echoText"),
+      title:$("title"), howto:$("howto"), dock:$("dock"), echo:$("echo"),
+      pause:$("pause"), summary:$("summary"),
+      dockName:$("dockName"), dockDesc:$("dockDesc"),
+      openChestBtn:$("openChestBtn"), leaveDockBtn:$("leaveDockBtn"),
+      echoLine:$("echoLine"),
+      sumGold:$("sumGold"), sumIslands:$("sumIslands"), sumEchoes:$("sumEchoes"),
+      sumBest:$("sumBest"), newBest:$("newBest"), closerLine:$("closerLine"),
+      lifetimeLine:$("lifetimeLine"), flash:$("flash"), fps:$("fps"),
+      pauseMute:$("pauseMuteBtn"), muteBtn:$("muteBtn"),
+      shop:$("shop"), shopGold:$("shopGold"), shopShips:$("shopShips"), shopUpgrades:$("shopUpgrades"),
+      tabShips:$("tabShips"), tabUpg:$("tabUpg"),
+      anchorBtn:$("anchorBtn"), focusBtn:$("focusBtn"), hailBtn:$("hailBtn"),
+      merchant:$("merchant"), merchantName:$("merchantName"), merchantLine:$("merchantLine"), merchantOpts:$("merchantOpts"),
+      continueBtn:$("continueBtn"), saveBtn:$("saveBtn"),
+    };
+  },
+
+  resize(){
+    const dpr = Math.min(window.devicePixelRatio||1, 2);
+    this.W = window.innerWidth; this.H = window.innerHeight;
+    this.canvas.width = this.W*dpr; this.canvas.height = this.H*dpr;
+    this.canvas.style.width=this.W+"px"; this.canvas.style.height=this.H+"px";
+    this.ctx.setTransform(dpr,0,0,dpr,0,0);
+    this.dpr = dpr;
+  },
+
+  /* ---------- UI flow ---------- */
+  bindUI(){
+    const d=this.dom, a=this.audio;
+    const tap = el => { el.addEventListener("click", ()=>{ a.init(); a.resume(); a.click(); }); };
+    [d.openChestBtn,d.leaveDockBtn].forEach(tap);
+
+    document.getElementById("beginBtn").onclick = ()=>{ a.init(); a.resume(); this.newVoyage(); };
+    document.getElementById("howBtn").onclick   = ()=>{ a.click(); this.show("howto"); };
+    document.getElementById("howCloseBtn").onclick = ()=>{ a.click(); this.hide("howto"); };
+    document.getElementById("pauseHowBtn").onclick = ()=>{ a.click(); this.show("howto"); };
+
+    document.getElementById("pauseBtn").onclick = ()=>{ if(this.mode==="sailing"){ a.click(); this.pauseGame(); } };
+    document.getElementById("resumeBtn").onclick= ()=>{ a.click(); this.resumeGame(); };
+    document.getElementById("restartBtn").onclick=()=>{ a.click(); this.hide("pause"); this.newVoyage(); };
+    document.getElementById("portBtn").onclick   =()=>{ a.click(); this.endVoyage(); };
+    document.getElementById("newVoyageBtn").onclick=()=>{ a.click(); this.newVoyage(); };
+    document.getElementById("continueBtn").onclick=()=>{ a.init(); a.resume(); this.loadVoyage(); };
+    document.getElementById("saveBtn").onclick    =()=>{ a.click(); this.saveVoyage("manual"); };
+
+    document.getElementById("shopBtn").onclick      = ()=>{ a.click(); this.hide("pause"); this.openShop(); };
+    document.getElementById("shopCloseBtn").onclick = ()=>{ a.click(); this.closeShop(); };
+    this.dom.tabShips.onclick = ()=>{ a.click(); this.setShopTab("ships"); };
+    this.dom.tabUpg.onclick   = ()=>{ a.click(); this.setShopTab("upgrades"); };
+    this.dom.shop.addEventListener("click", e=>{
+      const b=e.target.closest("[data-act]"); if(!b||b.disabled) return;
+      this.shopAction(b.dataset.act, b.dataset.id);
+    });
+
+    d.openChestBtn.onclick = ()=> this.openChest();
+    d.leaveDockBtn.onclick = ()=> this.leaveDock();
+    d.dockBtn.onclick      = ()=> this.dockAtNearest();
+    d.hailBtn.onclick      = ()=> this.hailMerchant();
+    // Anchor: press & hold to brake hard (sailing + Kraken phases)
+    const ab=this.dom.anchorBtn;
+    const setAnchor=(v)=>{ this.anchoring=v; ab.classList.toggle("active",v); };
+    ab.addEventListener("pointerdown", e=>{ e.preventDefault(); a.resume&&a.resume();
+      if(this.ship){ this.ship.vx*=0.55; this.ship.vy*=0.55; } setAnchor(true); });
+    const relAnchor=()=>setAnchor(false);
+    ab.addEventListener("pointerup",relAnchor);
+    ab.addEventListener("pointercancel",relAnchor);
+    ab.addEventListener("pointerleave",relAnchor);
+    // Focus on Ship: instantly snap the camera back to the player (Kraken only)
+    this.dom.focusBtn.addEventListener("pointerdown", e=>{ e.preventDefault(); a.click&&a.click();
+      if(this.ship){ this.cam.x=this.ship.x; this.cam.y=this.ship.y; this.focusHold=1.4; } });
+    d.echo.onclick         = ()=> this.hide("echo");
+
+    const toggleMute = ()=>{
+      a.init();
+      this.muted=!this.muted; a.setMuted(this.muted);
+      d.muteBtn.textContent = this.muted ? "♪̸" : "♪";
+      d.pauseMute.textContent = "Sound: " + (this.muted?"Off":"On");
+    };
+    d.muteBtn.onclick = ()=>{ a.click(); toggleMute(); };
+    d.pauseMute.onclick = ()=>{ a.click(); toggleMute(); };
+  },
+  show(id){ this.dom[id].classList.add("show"); },
+  hide(id){ this.dom[id].classList.remove("show"); },
+
+  refreshLifetime(){
+    const s=this.state;
+    this.dom.lifetimeLine.textContent =
+      `Lifetime gold ${s.lifetimeGold.toLocaleString()}  ·  Best voyage ${s.bestVoyage.toLocaleString()}  ·  Echoes ${s.lifetimeEchoes.length}/${ECHOES.length}`;
+  },
+
+  newVoyage(){
+    this.clearVoyage();               // a fresh start abandons any saved voyage
+    const w = generateWorld();        // randomized each time → replayable
+    this.world = w;
+    this.islands = w.islands;
+    this.state.reset();
+    this.state.islandCount = this.islands.length;
+    this.ship = this.makeShip(WORLD/2, WORLD/2);
+    this.cam = {x:this.ship.x, y:this.ship.y};
+    this.debris=[]; this.ghosts=[]; this.particles=new ParticleSystem(); this.screenFx=new ParticleSystem();
+    this.storm={phase:"calm",intensity:0,cooldown:rand(26,42),dur:0,dir:rand(0,TAU),warn:0};
+    this.cannonballs=[]; this.kraken=null; this.fireCd=0; this._bolt=null;
+    this.sinceDock=0; this.voyageTime=0; this.krakenCooldown=rand(95,150);
+    this.anchoring=false; this.focusHold=0; this.ctrlLock=0;
+    this.regrowing=false; this.merchant=null; this.merchantCd=rand(30,55); this.delivery=null;
+    this.birds=[];
+    this.dockIsland=null;
+    // seed a little starter debris nearby
+    for(let i=0;i<12;i++) this.debris.push(new Debris(rand(600,WORLD-600), rand(600,WORLD-600), Math.random()<0.16));
+    ["title","howto","summary","pause","dock","echo"].forEach(id=>this.hide(id));
+    this.dom.hud.classList.remove("hidden");
+    this.dom.topRight.classList.remove("hidden");
+    this.dom.joyWrap.classList.remove("hidden");
+    this.mode="sailing";
+    this.updateHUD();
+  },
+
+  /* ---------- voyage save / load ---------- */
+  saveVoyage(reason){
+    if(!this.ship) return;
+    if(["sailing","docking","paused","parley","kraken"].indexOf(this.mode)<0) return;
+    const s=this.state;
+    try{
+      const obj={ v:1, ts:Date.now(),
+        gold:s.gold, voyageTime:this.voyageTime, sinceDock:this.sinceDock,
+        discoveredCount:s.discoveredCount, lootedCount:s.lootedCount, islandCount:s.islandCount,
+        currentShip:s.currentShip, upgrades:Object.assign({},s.upgrades),
+        echoes:s.echoesThisVoyage.slice(),
+        ship:{x:this.ship.x,y:this.ship.y,angle:this.ship.angle,vx:this.ship.vx,vy:this.ship.vy},
+        delivery:this.delivery?Object.assign({},this.delivery):null,
+        regrowing:!!this.regrowing,
+        islands:this.islands.map(is=>({x:is.x,y:is.y,name:is.name,desc:is.desc,value:is.value,echo:is.echo,
+          r:is.r,type:is.type,seed:is.seed, looted:is.looted,discovered:is.discovered,
+          freshness:is.freshness,questTarget:is.questTarget,
+          reviveIn:(typeof is.reviveAt==="number"?Math.max(0,is.reviveAt-this.time):null)}))
+      };
+      localStorage.setItem(VOYAGE_KEY, JSON.stringify(obj));
+      this.refreshContinue();
+      this.showToast(reason==="manual"?"Voyage saved.":"Voyage auto-saved.", reason==="manual"?2000:1600);
+    }catch(e){ this.showToast("Couldn't save \u2014 storage may be full.",2600); }
+  },
+  hasVoyage(){ try{ const o=JSON.parse(localStorage.getItem(VOYAGE_KEY)); return !!(o&&o.v===1&&Array.isArray(o.islands)); }catch(e){ return false; } },
+  clearVoyage(){ try{ localStorage.removeItem(VOYAGE_KEY); }catch(e){} this.refreshContinue(); },
+  refreshContinue(){ if(this.dom&&this.dom.continueBtn) this.dom.continueBtn.classList.toggle("hidden", !this.hasVoyage()); },
+  loadVoyage(){
+    let o; try{ o=JSON.parse(localStorage.getItem(VOYAGE_KEY)); }catch(e){}
+    if(!o||o.v!==1||!Array.isArray(o.islands)){ this.newVoyage(); return; }
+    this.state.reset();
+    if(o.currentShip && this.state.ownsShip(o.currentShip)) this.state.currentShip=o.currentShip;
+    if(o.upgrades) this.state.upgrades=Object.assign({sails:0,hull:0,cargo:0}, o.upgrades);
+    this.state.gold=o.gold||0; this.state.displayGold=o.gold||0;
+    this.state.echoesThisVoyage=Array.isArray(o.echoes)?o.echoes.slice():[];
+    this.state.islandCount=o.islandCount||o.islands.length;
+    this.state.discoveredCount=o.discoveredCount||0; this.state.lootedCount=o.lootedCount||0;
+    this.islands=o.islands.map(d=>{
+      const is=new Island({x:d.x,y:d.y,name:d.name,desc:d.desc,value:d.value,echo:d.echo,r:d.r,type:d.type,seed:d.seed});
+      is.looted=!!d.looted; is.discovered=!!d.discovered;
+      is.freshness=(typeof d.freshness==="number")?d.freshness:(d.looted?0:1);
+      is.questTarget=!!d.questTarget;
+      is.reviveAt=(typeof d.reviveIn==="number")?d.reviveIn:null;
+      return is;
+    });
+    this.world={seed:0, islands:this.islands};
+    const sx=o.ship?o.ship.x:WORLD/2, sy=o.ship?o.ship.y:WORLD/2;
+    this.ship=this.makeShip(sx,sy);
+    if(o.ship){ this.ship.angle=o.ship.angle||0; this.ship.vx=o.ship.vx||0; this.ship.vy=o.ship.vy||0; }
+    this.cam={x:this.ship.x,y:this.ship.y};
+    this.debris=[]; this.ghosts=[]; this.birds=[]; this.particles=new ParticleSystem(); this.screenFx=new ParticleSystem();
+    this.storm={phase:"calm",intensity:0,cooldown:rand(26,42),dur:0,dir:rand(0,TAU),warn:0};
+    this.cannonballs=[]; this.kraken=null; this.fireCd=0; this._bolt=null;
+    this.sinceDock=o.sinceDock||0; this.voyageTime=o.voyageTime||0; this.krakenCooldown=rand(95,150);
+    this.anchoring=false; this.focusHold=0; this.ctrlLock=0;
+    this.regrowing=!!o.regrowing; this.merchant=null; this.merchantCd=rand(30,55);
+    this.delivery=o.delivery||null; this.dockIsland=null; this.dockRewarded=false; this.time=0;
+    for(let i=0;i<12;i++) this.debris.push(new Debris(this.ship.x+rand(-1400,1400), this.ship.y+rand(-1400,1400), Math.random()<0.16));
+    ["title","howto","summary","pause","dock","echo","merchant","shop"].forEach(id=>this.hide(id));
+    this.dom.hud.classList.remove("hidden"); this.dom.topRight.classList.remove("hidden"); this.dom.joyWrap.classList.remove("hidden");
+    this.mode="sailing"; this.updateHUD();
+    this.showToast("Voyage restored \u2014 welcome back, captain.",2800);
+  },
+
+  /* ---------- ships & port shop ---------- */
+  makeShip(x,y){ return new Ship(x,y, SHIP_BY_ID(this.state.currentShip), this.state.upgrades); },
+  reapplyLoadout(){ if(this.ship) this.ship.applyLoadout(SHIP_BY_ID(this.state.currentShip), this.state.upgrades); },
+  equipShip(id){ if(this.state.selectShip(id)) this.reapplyLoadout(); },
+
+  openShop(){ this.shopTab=this.shopTab||"ships"; this.show("shop"); this.buildShop(); },
+  closeShop(){ this.hide("shop"); this.show("pause"); },
+  setShopTab(tab){
+    this.shopTab=tab;
+    this.dom.tabShips.classList.toggle("active", tab==="ships");
+    this.dom.tabUpg.classList.toggle("active", tab==="upgrades");
+    this.dom.shopShips.classList.toggle("hidden", tab!=="ships");
+    this.dom.shopUpgrades.classList.toggle("hidden", tab!=="upgrades");
+  },
+  buildShop(){
+    const st=this.state;
+    const stars = v => { const n=clamp(Math.round(3+(v-1)/0.06),1,5);
+      return "\u2605".repeat(n)+"\u2606".repeat(5-n); };
+    this.dom.shopGold.textContent = st.lifetimeGold.toLocaleString();
+
+    let sh="";
+    for(const def of SHIPS){
+      const owned=st.ownsShip(def.id), equipped=st.currentShip===def.id;
+      let act;
+      if(equipped) act='<span class="shop-tag equipped">Equipped</span>';
+      else if(owned) act='<button class="btn small" data-act="equip" data-id="'+def.id+'">Equip</button>';
+      else { const ok=st.lifetimeGold>=def.price;
+        act='<button class="btn small'+(ok?'':' disabled')+'" data-act="buyship" data-id="'+def.id+'"'+(ok?'':' disabled')+'>Buy \u00b7 '+def.price.toLocaleString()+'</button>'; }
+      sh+='<div class="shop-card'+(equipped?' is-equipped':'')+'">'
+        +'<div class="shop-info"><div class="shop-name">'+def.name+'</div>'
+        +'<div class="shop-desc">'+def.tagline+'</div>'
+        +'<div class="shop-stats">Speed '+stars(def.stats.speed)+' \u00b7 Turn '+stars(def.stats.turn)+' \u00b7 Accel '+stars(def.stats.accel)+'</div></div>'
+        +'<div class="shop-act">'+act+'</div></div>';
+    }
+    this.dom.shopShips.innerHTML=sh;
+
+    let up="";
+    for(const u of UPGRADES){
+      const lvl=st.upgrades[u.key]||0, price=st.upgPrice(u.key);
+      let pips=""; for(let i=0;i<UPG_MAX;i++) pips+='<span class="pip'+(i<lvl?' on':'')+'"></span>';
+      let act;
+      if(price==null) act='<span class="shop-tag maxed">Maxed</span>';
+      else { const ok=st.lifetimeGold>=price;
+        act='<button class="btn small'+(ok?'':' disabled')+'" data-act="upg" data-id="'+u.key+'"'+(ok?'':' disabled')+'>Rank '+(lvl+1)+' \u00b7 '+price.toLocaleString()+'</button>'; }
+      up+='<div class="shop-card">'
+        +'<div class="shop-info"><div class="shop-name">'+u.icon+' '+u.name+'</div>'
+        +'<div class="shop-desc">'+u.desc+'</div><div class="shop-pips">'+pips+'</div></div>'
+        +'<div class="shop-act">'+act+'</div></div>';
+    }
+    this.dom.shopUpgrades.innerHTML=up;
+    this.setShopTab(this.shopTab||"ships");
+  },
+  shopAction(act,id){
+    const st=this.state, a=this.audio;
+    if(act==="equip"){ this.equipShip(id); a.click(); }
+    else if(act==="buyship"){ const r=st.buyShip(id); if(r==="bought"){ a.loot(); this.equipShip(id); } else a.click(); }
+    else if(act==="upg"){ const r=st.buyUpgrade(id); if(r==="bought"){ a.loot(); this.reapplyLoadout(); } else a.click(); }
+    this.buildShop(); this.refreshLifetime(); this.updateHUD();
+  },
+
+  pauseGame(){ this.mode="paused"; this.show("pause"); this.saveVoyage("auto"); },
+  resumeGame(){ this.hide("pause"); if(this.dockIsland){ this.mode="docking"; } else { this.mode="sailing"; } },
+
+  endVoyage(){
+    const best = this.state.bankVoyage();
+    this.clearVoyage();
+    this.hide("pause");
+    const d=this.dom, s=this.state;
+    d.sumGold.textContent    = s.gold.toLocaleString();
+    d.sumIslands.textContent = s.discoveredCount + "/" + s.islandCount;
+    d.sumEchoes.textContent  = s.echoesThisVoyage.length;
+    d.sumBest.textContent    = s.bestVoyage.toLocaleString();
+    d.newBest.classList.toggle("hidden", !best);
+    const closers = [
+      "The sea always calls you back…",
+      "Some horizons you keep for next time.",
+      "The tide goes out, and takes a little of you with it.",
+      "Port is only a place to dream of leaving again."
+    ];
+    d.closerLine.textContent = best ? "Your finest crossing yet. The sea always calls you back…"
+                                    : closers[Math.floor(Math.random()*closers.length)];
+    this.mode="summary";
+    this.dom.hud.classList.add("hidden");
+    this.dom.topRight.classList.add("hidden");
+    this.dom.joyWrap.classList.add("hidden");
+    this.dom.dockBtn.classList.remove("show");
+    this.refreshLifetime();
+    this.show("summary");
+  },
+
+  /* ---------- docking ---------- */
+  nearestDockable(){
+    if(!this.ship) return null;
+    let best=null, bd=1e9;
+    for(const is of this.islands){
+      if(is.looted) continue;
+      const dd = dist(this.ship.x,this.ship.y,is.x,is.y);
+      if(dd < is.r+130 && dd<bd){ bd=dd; best=is; }
+    }
+    return best;
+  },
+  dockAtNearest(){
+    const is = this.nearestDockable();
+    if(!is) return;
+    this.audio.splash(); this.audio.resume();
+    this.particles.splash(this.ship.x, this.ship.y);
+    this.dockIsland = is; this.dockRewarded=false; this.opening=false; is.chestOpen=0; this.sinceDock=0;
+    if(this.delivery && is.name===this.delivery.islandName){
+      const g=this.state.addGold(this.delivery.reward); is.questTarget=false; this.delivery=null;
+      this.audio.loot(); setTimeout(()=>this.showToast(`Parcel delivered! +${g} gold.`,3000), 350); this.updateHUD();
+    }
+    this.dom.dockName.textContent = is.name;
+    this.dom.dockDesc.textContent = is.desc;
+    this.dom.openChestBtn.classList.remove("hidden");
+    this.dom.openChestBtn.textContent = "Open the Chest";
+    this.dom.dockBtn.classList.remove("show");
+    this.mode="docking";
+    this.saveVoyage("auto");
+    this.show("dock");
+  },
+  openChest(){
+    if(!this.dockIsland || this.opening) return;
+    this.opening=true;
+    this.dom.openChestBtn.classList.add("hidden");
+  },
+  rewardChest(){
+    const is=this.dockIsland, s=this.state;
+    const base = is.value + Math.floor(rand(-30,60));
+    const gold = s.addGold(base);                 // applies cargo bonus, returns actual
+    this.audio.loot();
+    const cx=this.W/2, cy=this.H*0.52;
+    for(let i=0;i<34;i++) this.screenFx.spark(cx,cy, i%3? "#f2cf6b":"#ffe7a0");
+    for(let i=0;i<16;i++) this.screenFx.coin(cx+rand(-30,30), cy+10);
+    this.screenFx.floatText(cx, cy-92, "+"+gold+" gold", "#ffe7a0");
+    this.shake=Math.max(this.shake,5);
+    is.looted=true; s.lootedCount++;
+    const roll=Math.random();
+    if(roll<0.28 && is.echo && !s.echoesThisVoyage.includes(is.echo)){
+      s.echoesThisVoyage.push(is.echo);
+      setTimeout(()=>this.revealEcho(is.echo), 900);
+    }
+    this.updateHUD();
+  },
+  revealEcho(text){
+    this.dom.echoLine.textContent = "“" + text + "”";
+    // restart the CSS entrance animation
+    const line=this.dom.echoLine; line.style.animation="none"; void line.offsetWidth;
+    line.style.animation="";
+    this.audio.echoChime();
+    this.show("echo");
+  },
+  leaveDock(){
+    this.hide("dock");
+    this.dockIsland=null; this.opening=false;
+    this.audio.splash();
+    this.mode="sailing";
+  },
+
+  /* ---------- input ---------- */
+  bindInput(){
+    // keyboard
+    addEventListener("keydown", e=>{
+      const k=e.key.toLowerCase();
+      if(["arrowup","arrowdown","arrowleft","arrowright"," "].includes(e.key.toLowerCase())) e.preventDefault();
+      if(k==="w"||k==="arrowup") this.input.up=true;
+      if(k==="s"||k==="arrowdown") this.input.down=true;
+      if(k==="a"||k==="arrowleft") this.input.left=true;
+      if(k==="d"||k==="arrowright") this.input.right=true;
+      if(k===" "||k==="enter"){
+        if(this.mode==="kraken"){ this.fireCannon(); }
+        else if(this.mode==="sailing" && this.nearestDockable()) this.dockAtNearest();
+        else if(this.mode==="docking"){ if(!this.opening && this.dockIsland && !this.dockIsland.looted) this.openChest(); else this.leaveDock(); }
+        else if(this.dom.echo.classList.contains("show")) this.hide("echo");
+      }
+      if(k==="escape"||k==="p"){ if(this.mode==="sailing") this.pauseGame(); else if(this.mode==="paused") this.resumeGame(); }
+      if(k==="f"||k==="`"){ this.debug=!this.debug; this.dom.fps.style.display=this.debug?"block":"none"; }
+    });
+    addEventListener("keyup", e=>{
+      const k=e.key.toLowerCase();
+      if(k==="w"||k==="arrowup") this.input.up=false;
+      if(k==="s"||k==="arrowdown") this.input.down=false;
+      if(k==="a"||k==="arrowleft") this.input.left=false;
+      if(k==="d"||k==="arrowright") this.input.right=false;
+    });
+
+    // floating virtual joystick on the canvas (touch + mouse)
+    const wrap=this.dom.joyWrap, knob=this.dom.joyKnob;
+    const radius=()=> wrap.offsetWidth/2;
+    const moveBaseTo=(x,y)=>{
+      const r=wrap.offsetWidth/2;
+      wrap.style.left=(x-r)+"px"; wrap.style.top=(y-r)+"px"; wrap.style.bottom="auto";
+    };
+    const setKnob=(dx,dy)=>{ knob.style.left=`calc(50% + ${dx}px)`; knob.style.top=`calc(50% + ${dy}px)`; };
+    const reset=()=>{ knob.style.left="50%"; knob.style.top="50%"; };
+
+    const start=(x,y,id)=>{
+      if(this.mode!=="sailing") return false;
+      if(x > this.W*0.62) return false;          // left ~60% steers
+      this.joy.active=true; this.joy.id=id;
+      moveBaseTo(x,y); this.update_joy(x,y,radius());
+      return true;
+    };
+    const move=(x,y)=>{ if(this.joy.active) this.update_joy(x,y,radius()); };
+    const end=()=>{ this.joy.active=false; this.joy.mag=0; this.joy.id=null; reset();
+                    wrap.style.left="18px"; wrap.style.top="auto"; wrap.style.bottom="18px"; };
+
+    // During the Kraken: a quick tap fires the cannon; a drag becomes the
+    // steering joystick (so touch players can weave away from strikes).
+    let krak=null; const TAP_SLOP=12;
+    this.canvas.addEventListener("pointerdown", e=>{
+      if(this.mode==="kraken"){
+        krak={sx:e.clientX, sy:e.clientY, id:e.pointerId, moved:false};
+        try{ this.canvas.setPointerCapture(e.pointerId); }catch(_){}
+        return;
+      }
+      if(start(e.clientX,e.clientY,e.pointerId)){ this.canvas.setPointerCapture(e.pointerId); }
+    });
+    this.canvas.addEventListener("pointermove", e=>{
+      if(krak && e.pointerId===krak.id){
+        if(!krak.moved && Math.hypot(e.clientX-krak.sx, e.clientY-krak.sy) > TAP_SLOP){
+          krak.moved=true;                       // promote the gesture to a steering drag
+          this.joy.active=true; this.joy.id=krak.id;
+          moveBaseTo(krak.sx, krak.sy); this.update_joy(e.clientX,e.clientY,radius());
+        } else if(krak.moved){
+          this.update_joy(e.clientX,e.clientY,radius());
+        }
+        return;
+      }
+      if(e.pointerId===this.joy.id) move(e.clientX,e.clientY);
+    });
+    this.canvas.addEventListener("pointerup",   e=>{
+      if(krak && e.pointerId===krak.id){
+        if(!krak.moved) this.fireCannon();        // it was a tap → fire
+        if(this.joy.active && this.joy.id===krak.id) end();
+        krak=null; return;
+      }
+      if(e.pointerId===this.joy.id) end();
+    });
+    this.canvas.addEventListener("pointercancel",e=>{
+      if(krak && e.pointerId===krak.id){ if(this.joy.active && this.joy.id===krak.id) end(); krak=null; return; }
+      if(e.pointerId===this.joy.id) end();
+    });
+    // expose knob setter
+    this._setKnob=setKnob;
+    // prevent page gestures (only over the game canvas, so overlays still scroll)
+    document.addEventListener("touchmove", e=>{ if(e.target===this.canvas && e.cancelable) e.preventDefault(); }, {passive:false});
+    document.addEventListener("gesturestart", e=>e.preventDefault());
+    document.addEventListener("dblclick", e=>e.preventDefault());
+  },
+  update_joy(x,y,r){
+    const wrap=this.dom.joyWrap;
+    const cx = wrap.offsetLeft + wrap.offsetWidth/2;
+    const cy = wrap.offsetTop  + wrap.offsetHeight/2;
+    let dx=x-cx, dy=y-cy;
+    const len=Math.hypot(dx,dy), max=r;
+    const cl=Math.min(len,max);
+    if(len>0){ dx=dx/len*cl; dy=dy/len*cl; }
+    this._setKnob(dx,dy);
+    // small deadzone + remap → precise low-end control, no drift near centre
+    const raw=clamp(len/max,0,1), dz=0.12;
+    const m = raw<dz ? 0 : (raw-dz)/(1-dz);
+    if(m>0) this.joy.angle=Math.atan2(dy,dx);   // hold heading inside the deadzone
+    this.joy.mag=m;
+  },
+
+  /* ---------- per-frame update ---------- */
+  update(dt){
+    this.time += dt;
+
+    if(this.mode==="sailing" || this.mode==="docking"){
+      // apply steering input to ship (frozen feel-wise while docked: no thrust)
+      if(this.mode==="sailing"){
+        if(this.joy.active && this.joy.mag>0.08){
+          this.ship.desiredAngle=this.joy.angle; this.ship.thrust=this.joy.mag; this.ship.turn=0;
+        } else {
+          this.ship.desiredAngle=null;
+          this.ship.turn=(this.input.right?1:0)-(this.input.left?1:0);
+          this.ship.thrust=this.input.up?1:0;
+          if(this.input.down){ this.ship.vx*=Math.pow(0.4,dt); this.ship.vy*=Math.pow(0.4,dt); }
+        }
+      } else { this.ship.thrust=0; this.ship.turn=0; this.ship.desiredAngle=null; }
+
+      if(this.mode==="sailing" && this.anchoring){
+        this.ship.thrust=0; this.ship.turn=0; this.ship.desiredAngle=null;
+        const br=Math.pow(0.02,dt); this.ship.vx*=br; this.ship.vy*=br;
+      }
+
+      const stP = this.storm.phase==="active" ? this.storm.intensity : 0;
+      const push = stP>0.01
+        ? {x:Math.cos(this.storm.dir)*135*stP, y:Math.sin(this.storm.dir)*135*stP}
+        : null;
+      this.ship.update(dt, this.particles, push);
+
+      // discovery
+      for(const is of this.islands){
+        if(!is.discovered && dist(this.ship.x,this.ship.y,is.x,is.y) < is.r+360){
+          is.discovered=true; this.state.discoveredCount++; this.audio.blip(523,0.18,"sine",0.14); this.updateHUD();
+        }
+      }
+      // debris salvage
+      for(const d of this.debris){
+        if(d.dead) continue;
+        d.update(dt);
+        if(dist(this.ship.x,this.ship.y,d.x,d.y) < 46){
+          d.dead=true; const got=this.state.addGold(d.gold); this.audio.salvage();
+          for(let i=0;i<10;i++) this.particles.spark(d.x,d.y,"#aee9ff");
+          this.particles.floatText(d.x,d.y-20,"+"+got,"#aee9ff"); this.updateHUD();
+        }
+      }
+      this.debris=this.debris.filter(d=>!d.dead);
+      if(this.debris.length<16 && Math.random()<dt*0.75){
+        const big=Math.random()<0.18, a=rand(0,TAU), d=rand(650,1500);
+        this.debris.push(new Debris(this.ship.x+Math.cos(a)*d, this.ship.y+Math.sin(a)*d, big));
+      }
+
+      // ghost sails (flavour)
+      this.ghosts.forEach(g=>g.update(dt));
+      this.ghosts=this.ghosts.filter(g=>!g.dead);
+      if(this.ghosts.length<2 && Math.random()<dt*0.05) this.ghosts.push(new GhostShip());
+
+      // a passing merchant + a hail button when you draw near
+      this.maybeMerchant(dt);
+      if(this.merchant){
+        this.merchant.update(dt);
+        if(this.merchant.dead){ this.merchant=null; }
+        else { const near = dist(this.ship.x,this.ship.y,this.merchant.x,this.merchant.y)<220 && this.ship.speed<120;
+          this.dom.hailBtn.classList.toggle("show", near); }
+      } else { this.dom.hailBtn.classList.remove("show"); }
+      // little fish & ripples to keep the sea feeling alive between events
+      if(Math.random()<dt*0.5){ const a=rand(0,TAU), d=rand(130,430);
+        const fx=this.ship.x+Math.cos(a)*d, fy=this.ship.y+Math.sin(a)*d;
+        if(Math.random()<0.4) this.particles.fish(fx,fy); else this.particles.splash(fx,fy); }
+      // volcanic isles occasionally cough smoke & embers
+      if(Math.random()<dt*0.5){
+        for(const is of this.islands){
+          if(is.peakH>0 && is.discovered && dist(this.ship.x,this.ship.y,is.x,is.y)<1300){
+            const px=is.x, py=is.y-is.peakH;
+            for(let q=0;q<4;q++) this.particles.smoke(px+rand(-6,6),py-rand(0,6));
+            if(Math.random()<0.5) for(let q=0;q<5;q++) this.particles.spark(px+rand(-4,4),py,"#ff8a3a");
+            break;
+          }
+        }
+      }
+
+      // storms
+      this.updateStorm(dt);
+      if(this.mode==="sailing"){ this.voyageTime+=dt; this.sinceDock+=dt; this.maybeKraken(dt); }
+
+      // dock button visibility
+      const dockable = this.mode==="sailing" ? this.nearestDockable() : null;
+      if(dockable && this.ship.speed<80){
+        this.dom.dockBtnLabel.textContent = "DOCK AT " + dockable.name.toUpperCase();
+        this.dom.dockBtn.classList.add("show");
+      } else {
+        this.dom.dockBtn.classList.remove("show");
+      }
+
+      // chest lid animation + reward trigger
+      if(this.mode==="docking" && this.opening && this.dockIsland){
+        this.dockIsland.chestOpen = Math.min(1, this.dockIsland.chestOpen + dt*2.4);
+        if(!this.dockRewarded && this.dockIsland.chestOpen>0.55){ this.dockRewarded=true; this.rewardChest(); }
+      }
+
+      this.audio.updateWind(this.ship.speed01);
+    }
+
+    if(this.mode==="kraken") this.updateKraken(dt);
+
+    // camera follows ship; during the Kraken it frames both but keeps the ship on-screen
+    if(this.ship){
+      let tx=this.ship.x, ty=this.ship.y;
+      if(this.mode==="kraken" && this.kraken){
+        if((this.focusHold||0)>0){ this.focusHold-=dt; }
+        else { tx=this.ship.x*0.5 + this.kraken.x*0.5; ty=this.ship.y*0.5 + this.kraken.y*0.5; }
+      }
+      this.cam.x = lerp(this.cam.x, tx, clamp(dt*5,0,1));
+      this.cam.y = lerp(this.cam.y, ty, clamp(dt*5,0,1));
+      if(this.mode==="kraken"){
+        const mx=this.W*0.30, my=this.H*0.30;
+        this.cam.x=clamp(this.cam.x, this.ship.x-mx, this.ship.x+mx);
+        this.cam.y=clamp(this.cam.y, this.ship.y-my, this.ship.y+my);
+      }
+    }
+    this.shake = Math.max(0, this.shake - dt*3);
+
+    // islands wither when looted, slowly regrow when the voyage is cleared
+    if(this.islands){ for(const is of this.islands) is.step(dt); this.checkRegrow(); this.runRegrow(); }
+    // distant seabirds drift across the sky during play
+    if(this.birds){ if(this.mode==="sailing"||this.mode==="docking"||this.mode==="kraken") this.maybeBirds(dt); this.updateBirds(dt); }
+
+    this.particles.update(dt);
+    this.screenFx.update(dt);
+
+    // animated gold counter
+    const s=this.state;
+    s.displayGold += (s.gold - s.displayGold) * Math.min(1, dt*6);
+    this.dom.goldText.textContent = Math.round(s.displayGold).toLocaleString();
+  },
+
+  // Weather is EARNED, not random: drift too long without docking, or sail far
+  // out into open water, and the chance of a storm rolling in climbs.
+  updateStorm(dt){
+    const st=this.storm;
+    if(st.phase==="calm"){
+      st.cooldown-=dt;
+      if(st.cooldown<=0 && this.mode==="sailing"){
+        const far=this.nearestIslandDist(), longAtSea=this.sinceDock;
+        let risk=0;
+        if(longAtSea>40) risk += (longAtSea-40)*0.014;
+        if(far>1250)     risk += (far-1250)*0.00026;
+        if(risk>0 && Math.random() < risk*dt){
+          st.phase="warn"; st.warn=3.6; st.dir=rand(0,TAU);
+          this.showToast("\u26C8  A storm is gathering on the horizon\u2026", 3200);
+          this.audio.stormWarn();
+        }
+      }
+    } else if(st.phase==="warn"){
+      st.warn-=dt;
+      st.intensity=lerp(st.intensity,0.2,clamp(dt*1.5,0,1));  // sky begins to darken
+      if(Math.random()<dt*0.5) this.audio.thunder();          // distant rumbles
+      if(st.warn<=0){ st.phase="active"; st.dur=rand(11,17); this.audio.setStorm(0.6); }
+    } else { // active
+      st.dur-=dt;
+      st.intensity=lerp(st.intensity, st.dur<2.2?0:1, clamp(dt*0.9,0,1));
+      this.shake=Math.max(this.shake, st.intensity*6.5);
+      this.audio.setStorm(st.intensity*0.85);
+      if(Math.random()<dt*0.22*st.intensity){ this.audio.thunder(); this.lightning(); }
+      if(st.dur<=0){ st.phase="calm"; st.intensity=0; st.cooldown=rand(24,44);
+        this.sinceDock=Math.min(this.sinceDock,28); this.audio.setStorm(0); }
+    }
+  },
+  nearestIslandDist(){ let b=1e9; for(const is of this.islands){ const d=dist(this.ship.x,this.ship.y,is.x,is.y); if(d<b)b=d; } return b; },
+  lightning(){ this.flashScreen(0.55); this._bolt={t:0.22, x:rand(this.W*0.2,this.W*0.8), seed:Math.random()}; },
+
+  /* ---------- Kraken encounter ---------- */
+  maybeKraken(dt){
+    if(this.kraken || this.storm.phase!=="calm") return;
+    this.krakenCooldown-=dt;
+    if(this.voyageTime>110 && this.krakenCooldown<=0){
+      const chance = 0.07*dt + (this.voyageTime>200?0.05*dt:0);
+      if(Math.random()<chance) this.spawnKraken();
+    }
+  },
+  /* ---------- island regrowth (endless loop) ---------- */
+  checkRegrow(){
+    if(this.regrowing || !this.islands.length) return;
+    if(this.islands.every(is=>is.looted)){
+      this.regrowing=true;
+      this.showToast("Every isle lies plundered\u2026 but the tide always turns.", 4200);
+      const base=this.time + 6;                 // a calm beat before life returns
+      this.islands.forEach((is,i)=>{ is.reviveAt = base + i*1.4; });
+    }
+  },
+  runRegrow(){
+    if(!this.regrowing) return;
+    let left=false;
+    for(const is of this.islands){
+      if(is.looted && is.reviveAt!=null && this.time>=is.reviveAt){
+        is.looted=false; is.value=Math.floor(rand(150,460)); is.chestOpen=0; is.shine=2.4; is.reviveAt=null;
+        this.particles.ring(is.x,is.y,"#7fe9b0");
+        for(let k=0;k<12;k++) this.particles.spark(is.x+rand(-is.r*0.5,is.r*0.5), is.y+rand(-is.r*0.5,is.r*0.5), "#bff5d0");
+        this.audio.blip(660,0.3,"sine",0.12);
+      }
+      if(is.looted) left=true;
+    }
+    if(!left){ this.regrowing=false; this.showToast("The isles grow green again \u2014 fresh plunder awaits!", 3600); }
+  },
+  /* ---------- merchant encounters ---------- */
+  maybeMerchant(dt){
+    if(this.merchant || this.storm.phase!=="calm") return;
+    this.merchantCd-=dt;
+    if(this.merchantCd<=0){
+      const a=this.ship.angle+rand(-1.1,1.1), d=rand(520,780);
+      const mx=clamp(this.ship.x+Math.cos(a)*d, 200, WORLD-200);
+      const my=clamp(this.ship.y+Math.sin(a)*d, 200, WORLD-200);
+      this.merchant=new Merchant(mx,my); this.merchantCd=rand(55,95);
+    }
+  },
+  hailMerchant(){
+    const m=this.merchant; if(!m) return;
+    m.hailed=true; this.mode="parley"; this.audio.resume(); this.audio.blip(440,0.12,"sine",0.14);
+    this.dom.hailBtn.classList.remove("show"); this.dom.dockBtn.classList.remove("show");
+    this.buildMerchant(m); this.show("merchant");
+  },
+  buildMerchant(m){
+    const s=this.state, host=this.dom.merchantOpts; let line="", opts=[];
+    if(m.kind==="trade"){
+      const pay=40+Math.floor(rand(0,80));
+      line=`"Spare cargo weighing you down? I'll give a fair ${pay} gold for the lot."`;
+      opts=[{label:`Sell cargo (+${pay}g)`, act:()=>this.merchantResolve("sell",pay)},
+            {label:"Not today", ghost:true, act:()=>this.merchantResolve("leave",0)}];
+    } else if(m.kind==="bargain"){
+      const cost=70+Math.floor(rand(0,90)), ret=Math.floor(cost*rand(2.2,3.0));
+      line=`"A locked chest, contents unseen \u2014 ${cost} gold and it's yours. Could be a fortune within\u2026"`;
+      opts=[{label:`Buy the chest (-${cost}g)`, disabled:s.lifetimeGold<cost, act:()=>this.merchantResolve("gamble",cost,ret)},
+            {label:"Too rich for me", ghost:true, act:()=>this.merchantResolve("leave",0)}];
+    } else {
+      const dest=this.islands[Math.floor(rand(0,this.islands.length))];
+      const reward=120+Math.floor(rand(0,170));
+      m._dest=dest; m._reward=reward;
+      line=`"Run this parcel out to ${dest.name} for me. ${reward} gold the moment it's delivered."`;
+      opts=[{label:`Accept the run (+${reward}g)`, act:()=>this.merchantResolve("delivery",reward)},
+            {label:"Decline", ghost:true, act:()=>this.merchantResolve("leave",0)}];
+    }
+    this.dom.merchantName.textContent = m.shady?"A shifty-looking trader":"A passing trader";
+    this.dom.merchantLine.textContent = line;
+    host.innerHTML="";
+    for(const o of opts){
+      const btn=document.createElement("button");
+      btn.className="btn"+(o.ghost?" ghost":"");
+      btn.textContent=o.label;
+      if(o.disabled){ btn.disabled=true; btn.classList.add("disabled"); }
+      else btn.onclick=()=>{ this.audio.click(); o.act(); };
+      host.appendChild(btn);
+    }
+  },
+  merchantResolve(type, amount, ret){
+    const s=this.state, m=this.merchant, shady=m&&m.shady; this.hide("merchant");
+    if(type==="sell"){ const g=s.addGold(amount); this.showToast(`Sold your cargo for ${g} gold.`,2600); this.audio.salvage(); }
+    else if(type==="gamble"){
+      if(s.spendGold(amount)){
+        const scam=Math.random() < (shady?0.55:0.26);
+        if(scam){ this.showToast("The chest held nothing but bilge-water \u2014 swindled!",3200); this.audio.blip(150,0.3,"sawtooth",0.18); }
+        else { const g=s.addGold(ret); this.showToast(`The chest spilled ${g} gold \u2014 a fine bargain!`,3200); this.audio.loot(); }
+      }
+      s.displayGold=s.gold;
+    } else if(type==="delivery" && m && m._dest){
+      this.delivery={ islandName:m._dest.name, reward:m._reward };
+      m._dest.questTarget=true;
+      this.showToast(`Parcel aboard \u2014 deliver it to ${m._dest.name} for ${m._reward} gold.`,3600);
+    }
+    // a shifty trader may turn on you as they slip away
+    if(shady && type!=="delivery" && Math.random()<0.5){
+      const loss=Math.min(s.gold, 25+Math.floor(rand(0,45)));
+      if(loss>0){ s.gold-=loss; s.lifetimeGold=Math.max(0,s.lifetimeGold-loss); s.save&&s.save(); s.displayGold=s.gold;
+        this.particles.floatText(this.ship.x,this.ship.y-42,"-"+loss+" gold","#ff8a6a"); }
+      this.showToast("A pirate in trader's clothing! A parting volley \u2014 and they're gone!",3600);
+      this.shake=Math.max(this.shake,9); this.redFlash(0.4); this.audio.cannonHit();
+    }
+    if(m) m.done=true; this.merchant=null; this.merchantCd=rand(50,90);
+    this.mode="sailing"; this.updateHUD();
+  },
+  spawnKraken(){
+    if(this.kraken) return;
+    const a=this.ship.angle, d=300;
+    const kx=this.ship.x+Math.cos(a)*d, ky=this.ship.y+Math.sin(a)*d;
+    this.kraken=new Kraken(kx,ky); this.cannonballs=[]; this.fireCd=0;
+    this.mode="kraken"; this.dom.dockBtn.classList.remove("show");
+    this.showToast("\uD83D\uDC19  The Kraken surfaces!  Tap to fire, drag to steer away, anchor to brace.", 4200);
+    this.audio.krakenRoar(); this.shake=Math.max(this.shake,9);
+    for(let i=0;i<28;i++) this.particles.splash(kx+rand(-60,60),ky+rand(-30,30));
+    this.particles.ring(kx,ky,"#7fe9d6");
+  },
+  fireCannon(){
+    if(this.mode!=="kraken" || !this.kraken || this.kraken.state==="defeated" || this.kraken.state==="leaving") return;
+    if(this.fireCd>0) return;
+    this.fireCd=0.34;
+    const k=this.kraken, ang=Math.atan2(k.y-this.ship.y,k.x-this.ship.x), sp=730;
+    const mx=this.ship.x+Math.cos(ang)*26, my=this.ship.y+Math.sin(ang)*26;
+    this.cannonballs.push({x:mx,y:my,vx:Math.cos(ang)*sp,vy:Math.sin(ang)*sp,life:2.4});
+    this.particles.spark(mx,my,"#ffd98a"); this.audio.cannonFire();
+    this.shake=Math.max(this.shake,2.5);
+  },
+  updateKraken(dt){
+    this.fireCd=Math.max(0,this.fireCd-dt);
+    this.ctrlLock=Math.max(0,(this.ctrlLock||0)-dt);
+    // the captain can still steer to dodge — except briefly after a hit, or while anchored
+    if(this.ctrlLock>0 || this.anchoring){
+      this.ship.thrust=0; this.ship.turn=0; this.ship.desiredAngle=null;
+    } else if(this.joy.active && this.joy.mag>0.08){
+      this.ship.desiredAngle=this.joy.angle; this.ship.thrust=this.joy.mag*0.9; this.ship.turn=0;
+    } else {
+      this.ship.desiredAngle=null;
+      this.ship.turn=(this.input.right?1:0)-(this.input.left?1:0);
+      this.ship.thrust=this.input.up?0.85:0;
+      if(this.input.down){ this.ship.vx*=Math.pow(0.4,dt); this.ship.vy*=Math.pow(0.4,dt); }
+    }
+    if(this.anchoring){ const br=Math.pow(0.02,dt); this.ship.vx*=br; this.ship.vy*=br; }
+    this.ship.update(dt,this.particles,null);
+    const k=this.kraken; if(!k) return;
+    k.update(dt,this.ship);
+    // resolve a tentacle strike (locked onto where the ship was when it wound up)
+    if(k._strikeReady){
+      k._strikeReady=false;
+      if(this.ctrlLock<=0 && dist(this.ship.x,this.ship.y,k._strikePt.x,k._strikePt.y) < 82){
+        this.krakenHitsShip();
+      } else {
+        this.particles.ring(k._strikePt.x,k._strikePt.y,"#9fb0c0");
+        for(let i=0;i<10;i++) this.particles.splash(k._strikePt.x+rand(-16,16),k._strikePt.y+rand(-16,16));
+      }
+    }
+    for(const b of this.cannonballs){
+      b.x+=b.vx*dt; b.y+=b.vy*dt; b.life-=dt;
+      if(Math.random()<dt*30) this.particles.smoke(b.x,b.y);
+      if(k.state!=="defeated" && k.state!=="leaving" && dist(b.x,b.y,k.x,k.y)<k.hitR){
+        b.life=0; k.hit(); this.audio.cannonHit(); this.shake=Math.max(this.shake,5);
+        for(let i=0;i<14;i++) this.particles.spark(b.x,b.y, i%2?"#ffd98a":"#bcf3e6");
+        this.particles.ring(k.x,k.y,"#ffd98a");
+        if(k.hp<=0) this.defeatKraken();
+      }
+    }
+    this.cannonballs=this.cannonballs.filter(b=>b.life>0);
+    if(k.state==="leaving" && k.rise<=0.001){ this.kraken=null; this.cannonballs=[]; this.mode="sailing"; this.focusHold=0; }
+  },
+  krakenHitsShip(){
+    const k=this.kraken; if(!k) return;
+    const aw=Math.atan2(this.ship.y-k.y, this.ship.x-k.x);     // shove away from the beast
+    this.ship.vx += Math.cos(aw)*310; this.ship.vy += Math.sin(aw)*310;
+    const s=this.state, loss=Math.min(s.gold, 55+Math.floor(rand(0,75)));
+    if(loss>0){ s.gold-=loss; s.lifetimeGold=Math.max(0,s.lifetimeGold-loss); s.save&&s.save(); }
+    s.displayGold=s.gold;
+    this.particles.floatText(this.ship.x,this.ship.y-48, loss>0?("-"+loss+" gold"):"a glancing blow!", "#ff8a6a");
+    this.ctrlLock=1.15; this.shake=Math.max(this.shake,13); this.redFlash(0.5);
+    for(let i=0;i<20;i++) this.particles.splash(this.ship.x+rand(-22,22), this.ship.y+rand(-22,22));
+    this.audio.krakenRoar(); this.audio.cannonHit(); this.updateHUD();
+  },
+  defeatKraken(){
+    const k=this.kraken; if(!k || k._rewarded) return;
+    k._rewarded=true; k.state="defeated";
+    const got=this.state.addGold(420+Math.floor(rand(0,240)));
+    this.particles.floatText(this.ship.x,this.ship.y-46,"+"+got+" gold","#ffe7a0");
+    for(let i=0;i<42;i++) this.particles.coin(k.x+rand(-40,40),k.y);
+    this.particles.ring(k.x,k.y,"#bcf3e6"); this.audio.loot(); this.updateHUD();
+    const echo=KRAKEN_ECHO[Math.floor(Math.random()*KRAKEN_ECHO.length)];
+    if(!this.state.echoesThisVoyage.includes(echo)){ this.state.echoesThisVoyage.push(echo); this.updateHUD(); }
+    this.krakenCooldown=rand(150,220);
+    setTimeout(()=>{ if(this.kraken) this.kraken.state="leaving"; }, 1100);
+    setTimeout(()=> this.revealEcho(echo), 1500);
+  },
+  flashScreen(a){ const f=this.dom.flash;
+    f.style.background="radial-gradient(circle, rgba(220,235,255,.6), rgba(120,160,210,.1))";
+    f.style.opacity=a; setTimeout(()=>{ f.style.opacity=0; }, 90); },
+  redFlash(a){ const f=this.dom.flash;
+    f.style.background="radial-gradient(circle, rgba(255,90,70,.5), rgba(120,20,10,.1))";
+    f.style.opacity=a; setTimeout(()=>{ f.style.opacity=0; }, 130); },
+  showToast(text,dur=2600){
+    const el=document.getElementById("toast"); if(!el) return;
+    el.textContent=text; el.classList.add("show");
+    clearTimeout(this._toastT); this._toastT=setTimeout(()=>el.classList.remove("show"), dur);
+  },
+
+  updateHUD(){
+    this.dom.echoText.textContent = `Echoes ${this.state.echoesThisVoyage.length}/${this.state.islandCount}`;
+  },
+
+  /* ---------- rendering ---------- */
+  render(){
+    const ctx=this.ctx, W=this.W, H=this.H;
+    ctx.clearRect(0,0,W,H);
+    this.drawSea(ctx,W,H);
+
+    // camera transform (world -> screen) with shake
+    const sx = (Math.random()-0.5)*this.shake;
+    const sy = (Math.random()-0.5)*this.shake;
+    ctx.save();
+    ctx.translate(W/2 - this.cam.x + sx, H/2 - this.cam.y + sy);
+
+    // world objects, depth-sorted lightly: islands, debris, ghosts under ship
+    for(const g of this.ghosts) g.draw(ctx);
+    for(const is of this.islands) this.drawIslandIfVisible(ctx,is);
+    for(const d of this.debris) d.draw(ctx,this.time);
+    if(this.merchant) this.merchant.draw(ctx,this.time);
+    if(this.kraken) this.kraken.draw(ctx,this.time);
+    this.particles.draw(ctx);
+    if(this.ship) this.ship.draw(ctx);
+    this._drawCannonballs(ctx);
+    this.particles.drawTexts(ctx);
+
+    ctx.restore();
+
+    // storm veil + rain (screen space)
+    if(this.storm.intensity>0.01) this.drawStorm(ctx,W,H);
+
+    // distant seabirds (screen space), then the haze
+    if(this.birds) this.drawBirds(ctx);
+    // distance haze vignette
+    this.drawVignette(ctx,W,H);
+
+    // HUD-on-canvas: compass + minimap
+    if(this.mode==="sailing"||this.mode==="docking"){
+      this.drawCompass(ctx,W);
+      this.drawMinimap(ctx,W,H);
+    }
+    if(this.mode==="kraken" && this.kraken) this.drawKrakenHud(ctx,W,H);
+    // show contextual controls for the current mode
+    if(this.dom.anchorBtn) this.dom.anchorBtn.classList.toggle("show", this.mode==="sailing"||this.mode==="kraken");
+    if(this.dom.focusBtn)  this.dom.focusBtn.classList.toggle("show", this.mode==="kraken");
+    if(this.dom.hailBtn && this.mode!=="sailing") this.dom.hailBtn.classList.remove("show");
+
+    // dock chest (screen space) above the dimmed sea
+    if(this.mode==="docking" && this.dockIsland){
+      this.dockIsland.drawChest(ctx, W/2, H*0.56, Math.min(1.4, H/520), this.time);
+      this.screenFx.draw(ctx);
+      this.screenFx.drawTexts(ctx);
+    }
+
+    if(this.debug && this.ship){
+      this.dom.fps.textContent =
+        `${this.fps} fps · x${this.ship.x|0} y${this.ship.y|0} · spd ${this.ship.speed|0} · p${this.particles.parts.length}`;
+    }
+  },
+
+  maybeBirds(dt){
+    if(this.birds.length>0) return;
+    if(Math.random()<dt*0.05){
+      const dir=Math.random()<0.5?1:-1, n=3+Math.floor(rand(0,4));
+      const y0=rand(this.H*0.06, this.H*0.32), x0= dir>0 ? -40 : this.W+40, sp=dir*rand(40,72);
+      const flock=[];
+      for(let i=0;i<n;i++) flock.push({ox:i*-dir*22+rand(-6,6), oy:rand(-12,12)+Math.abs(i-n/2)*6, ph:rand(0,TAU)});
+      this.birds.push({x:x0,y:y0,sp,dir,flock,t:0});
+    }
+  },
+  updateBirds(dt){
+    for(let i=this.birds.length-1;i>=0;i--){ const b=this.birds[i]; b.x+=b.sp*dt; b.t+=dt;
+      if((b.dir>0 && b.x>this.W+80)||(b.dir<0 && b.x<-80)) this.birds.splice(i,1); }
+  },
+  drawBirds(ctx){
+    for(const b of this.birds){
+      ctx.save(); ctx.strokeStyle="rgba(40,55,70,.5)"; ctx.lineWidth=2; ctx.lineCap="round";
+      for(const g of b.flock){
+        const flap=Math.sin(b.t*8+g.ph)*4;
+        const x=b.x+g.ox, y=b.y+g.oy+Math.sin(b.t*1.4+g.ph)*4;
+        ctx.beginPath(); ctx.moveTo(x-7,y+(4-flap)); ctx.quadraticCurveTo(x,y-2,x,y);
+        ctx.quadraticCurveTo(x,y-2,x+7,y+(4-flap)); ctx.stroke();
+      }
+      ctx.restore();
+    }
+  },
+  drawSea(ctx,W,H){
+    // base depth gradient
+    const g=ctx.createLinearGradient(0,0,0,H);
+    g.addColorStop(0,"#061325"); g.addColorStop(0.55,"#0a2a45"); g.addColorStop(1,"#0e3f52");
+    ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+
+    // layered moving swell lines (parallax to camera) — the living ocean
+    const layers=[
+      {gap:150, amp:11, len:540, par:0.30, alpha:0.05, col:"#bfe9ff"},
+      {gap:96,  amp:8,  len:360, par:0.55, alpha:0.06, col:"#5fd6c2"},
+      {gap:62,  amp:5,  len:230, par:0.85, alpha:0.05, col:"#ffffff"},
+    ];
+    const cx=this.cam?this.cam.x:0, cy=this.cam?this.cam.y:0;
+    ctx.lineWidth=1.6;
+    for(const L of layers){
+      const yShift = ((-cy*L.par*0.25)%L.gap + L.gap)%L.gap;
+      ctx.strokeStyle=hexA(L.col,L.alpha);
+      for(let y=-L.gap; y<H+L.gap; y+=L.gap){
+        ctx.beginPath();
+        for(let x=0;x<=W;x+=16){
+          const phase=(x + cx*L.par)/L.len + this.time*L.par*0.6;
+          const yy=y+yShift+Math.sin(phase)*L.amp*(1+(this.storm?this.storm.intensity:0)*1.1);
+          x===0?ctx.moveTo(x,yy):ctx.lineTo(x,yy);
+        }
+        ctx.stroke();
+      }
+    }
+    // drifting glints
+    ctx.fillStyle="rgba(190,233,255,.10)";
+    for(let i=0;i<40;i++){
+      const gx=((i*137.5 - cx*0.3)%W+W)%W;
+      const gy=((i*89.3  - cy*0.3 + Math.sin(this.time+i)*8)%H+H)%H;
+      ctx.fillRect(gx,gy,2,2);
+    }
+    // scattered foam caps drifting on the swell
+    ctx.strokeStyle="rgba(220,240,255,.07)"; ctx.lineWidth=2; ctx.lineCap="round";
+    for(let i=0;i<26;i++){
+      const fx=((i*167.3 - cx*0.5)%W+W)%W;
+      const fy=((i*101.7 - cy*0.5 + Math.sin(this.time*0.8+i)*10)%H+H)%H;
+      const ph=this.time*1.4+i;
+      ctx.beginPath(); ctx.moveTo(fx,fy); ctx.lineTo(fx+6+Math.sin(ph)*2, fy-1); ctx.stroke();
+    }
+  },
+
+  drawIslandIfVisible(ctx,is){
+    // cull when far off-screen
+    const sxp = is.x - this.cam.x + this.W/2;
+    const syp = is.y - this.cam.y + this.H/2;
+    if(sxp < -is.r-260 || sxp > this.W+is.r+260 || syp < -is.r-260 || syp > this.H+is.r+260) return;
+    is.draw(ctx,this.time);
+    // name banner when near / discovered
+    const dd = dist(this.ship.x,this.ship.y,is.x,is.y);
+    if(is.discovered && dd < is.r+520){
+      ctx.save();
+      ctx.translate(is.x, is.y - is.r - 26);
+      ctx.font="600 18px Hoefler Text, Georgia, serif"; ctx.textAlign="center";
+      const w=ctx.measureText(is.name).width+24;
+      ctx.fillStyle="rgba(20,14,6,.6)";
+      ctx.beginPath(); ctx.roundRect(-w/2,-18,w,26,6); ctx.fill();
+      ctx.strokeStyle=hexA("#f2cf6b",is.looted?0.4:0.8); ctx.lineWidth=1; ctx.stroke();
+      ctx.fillStyle=is.looted?"rgba(242,207,107,.55)":"#ffe7a0";
+      ctx.fillText(is.name, 0, 1);
+      ctx.restore();
+    }
+  },
+
+  drawStorm(ctx,W,H){
+    const i=this.storm.intensity;
+    ctx.fillStyle=hexA("#0a1426", 0.5*i); ctx.fillRect(0,0,W,H);
+    // wind-driven rain, two layers for depth, slanted by the storm's bearing
+    const gust=0.7+0.3*Math.sin(this.time*0.7)+0.14*Math.sin(this.time*2.3);
+    const slant=Math.cos(this.storm.dir)*10 + Math.sin(this.time*0.9)*4, t=this.time*1000;
+    for(const L of [{n:90,len:22,a:0.18,sp:1.0,w:1.4},{n:60,len:34,a:0.12,sp:1.5,w:1.0}]){
+      ctx.strokeStyle=hexA("#cfe2f5", L.a*i*gust); ctx.lineWidth=L.w;
+      const n=Math.floor(L.n*i*clamp(gust,0,1.2));
+      for(let k=0;k<n;k++){
+        const x=((k*53 + t*L.sp)%(W+80))-40;
+        const y=((k*97 + t*L.sp*1.3)%(H+80))-40;
+        ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x-slant*0.4-3, y+L.len); ctx.stroke();
+      }
+    }
+    // forked lightning bolt
+    if(this._bolt){
+      this._bolt.t-=1/60; const b=this._bolt;
+      ctx.strokeStyle=hexA("#eaf3ff",0.9); ctx.lineWidth=2.4;
+      ctx.shadowColor="#bcd6ff"; ctx.shadowBlur=18;
+      let x=b.x,y=-10, r=b.seed*1e6+this.time*1000;
+      const rnd=()=>(((r=(r*9301+49297)%233280)/233280));
+      ctx.beginPath(); ctx.moveTo(x,y);
+      let bx=0,by=0, step=0; const branchAt=2+Math.floor(rnd()*3);
+      while(y<H*0.72){ y+=26+rnd()*26; x+=(rnd()-0.5)*64; ctx.lineTo(x,y);
+        if(step++===branchAt){ bx=x; by=y; } }
+      ctx.stroke();
+      if(by){ ctx.lineWidth=1.4; ctx.beginPath(); ctx.moveTo(bx,by);
+        let fx=bx,fy=by; for(let k=0;k<4;k++){ fy+=20+rnd()*22; fx+=(rnd()-0.4)*52; ctx.lineTo(fx,fy); } ctx.stroke(); }
+      ctx.shadowBlur=0;
+      if(b.t<=0) this._bolt=null;
+    }
+    // darkened storm edges
+    const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*0.2,W/2,H/2,Math.max(W,H)*0.7);
+    g.addColorStop(0,"rgba(0,0,0,0)"); g.addColorStop(1,hexA("#040810",0.5*i));
+    ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  },
+  drawKrakenHud(ctx,W,H){
+    const k=this.kraken, bw=Math.min(420,W*0.6), bh=15, x=(W-bw)/2, y=72;
+    ctx.save(); ctx.textAlign="center";
+    ctx.font="600 16px Hoefler Text, Georgia, serif";
+    ctx.fillStyle="#ffe7a0"; ctx.shadowColor="rgba(0,0,0,.7)"; ctx.shadowBlur=6;
+    ctx.fillText("THE KRAKEN", W/2, y-10); ctx.shadowBlur=0;
+    ctx.fillStyle="rgba(20,14,6,.78)"; ctx.beginPath(); ctx.roundRect(x-3,y-3,bw+6,bh+6,7); ctx.fill();
+    ctx.strokeStyle=hexA("#f2cf6b",0.85); ctx.lineWidth=2; ctx.stroke();
+    const frac=clamp(k.hp/k.maxhp,0,1);
+    const g=ctx.createLinearGradient(x,0,x+bw,0); g.addColorStop(0,"#9c2f2e"); g.addColorStop(1,"#d6533f");
+    ctx.fillStyle=g; ctx.beginPath(); ctx.roundRect(x,y,Math.max(0,bw*frac),bh,5); ctx.fill();
+    ctx.restore();
+  },
+  _drawCannonballs(ctx){
+    for(const b of this.cannonballs){
+      ctx.save(); ctx.fillStyle="#1b1b1f"; ctx.shadowColor="rgba(0,0,0,.5)"; ctx.shadowBlur=6;
+      ctx.beginPath(); ctx.arc(b.x,b.y,5,0,TAU); ctx.fill();
+      ctx.fillStyle="rgba(130,130,140,.85)"; ctx.beginPath(); ctx.arc(b.x-1.6,b.y-1.6,1.8,0,TAU); ctx.fill();
+      ctx.restore();
+    }
+  },
+
+  drawVignette(ctx,W,H){
+    const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*0.35,W/2,H/2,Math.max(W,H)*0.75);
+    g.addColorStop(0,"rgba(0,0,0,0)"); g.addColorStop(1,"rgba(2,6,14,0.55)");
+    ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  },
+
+  drawCompass(ctx,W){
+    // points toward nearest unlooted island; N marked
+    const cx=W/2, cy=52 + (this.safe?this.safe.t:0), R=24;
+    ctx.save();
+    ctx.fillStyle="rgba(20,14,6,.7)"; ctx.beginPath(); ctx.arc(cx,cy,R,0,TAU); ctx.fill();
+    ctx.strokeStyle=hexA("#f2cf6b",0.7); ctx.lineWidth=2; ctx.stroke();
+    ctx.fillStyle="rgba(242,207,107,.8)"; ctx.font="10px Hoefler Text, Georgia, serif"; ctx.textAlign="center";
+    ctx.fillText("N",cx,cy-R+10);
+    // needle
+    let target=null, bd=1e9;
+    for(const is of this.islands){ if(is.looted) continue;
+      const dd=dist(this.ship.x,this.ship.y,is.x,is.y); if(dd<bd){bd=dd;target=is;} }
+    let ang = target ? Math.atan2(target.y-this.ship.y, target.x-this.ship.x) : -Math.PI/2;
+    ctx.translate(cx,cy); ctx.rotate(ang);
+    ctx.fillStyle="#9c3b2e";
+    ctx.beginPath(); ctx.moveTo(R-6,0); ctx.lineTo(-6,-5); ctx.lineTo(-6,5); ctx.fill();
+    ctx.fillStyle="rgba(255,231,160,.85)";
+    ctx.beginPath(); ctx.moveTo(-6,0); ctx.lineTo(-R+8,-4); ctx.lineTo(-R+8,4); ctx.fill();
+    ctx.restore();
+  },
+
+  drawMinimap(ctx,W,H){
+    const S = Math.max(110, Math.min(160, Math.min(W,H)*0.26));
+    const pad=12, x0=W-S-pad-(this.safe?this.safe.r:0), y0=H-S-pad-(this.safe?this.safe.b:0);
+    const sc=S/WORLD;
+    ctx.save();
+    ctx.fillStyle="rgba(20,14,6,.66)";
+    ctx.strokeStyle=hexA("#f2cf6b",0.6); ctx.lineWidth=2;
+    ctx.beginPath(); ctx.roundRect(x0,y0,S,S,8); ctx.fill(); ctx.stroke();
+    ctx.save(); ctx.beginPath(); ctx.roundRect(x0,y0,S,S,8); ctx.clip();
+    // islands
+    for(const is of this.islands){
+      const ix=x0+is.x*sc, iy=y0+is.y*sc;
+      let col = !is.discovered ? "rgba(150,150,150,.45)" : (is.looted ? "rgba(242,207,107,.4)" : "#5fe0a0");
+      ctx.fillStyle=col; ctx.beginPath(); ctx.arc(ix,iy,is.discovered?4:3,0,TAU); ctx.fill();
+      if(!is.looted && is.discovered){            // ready to plunder
+        ctx.strokeStyle=hexA("#5fe0a0",0.45); ctx.lineWidth=1;
+        ctx.beginPath(); ctx.arc(ix,iy,6+Math.sin(this.time*3)*1.5,0,TAU); ctx.stroke();
+      } else if(is.looted && is.reviveAt!=null){   // regrowing
+        ctx.strokeStyle=hexA("#7fe9b0",0.5); ctx.lineWidth=1;
+        ctx.beginPath(); ctx.arc(ix,iy,5+Math.sin(this.time*4)*1.5,0,TAU); ctx.stroke();
+      }
+      if(is.questTarget){ ctx.strokeStyle="#39d6c0"; ctx.lineWidth=1.6;
+        ctx.beginPath(); ctx.arc(ix,iy,7.5,0,TAU); ctx.stroke(); }
+    }
+    if(this.merchant){ const mx=x0+this.merchant.x*sc, my=y0+this.merchant.y*sc;
+      ctx.fillStyle="#e8c873"; ctx.beginPath(); ctx.arc(mx,my,3,0,TAU); ctx.fill(); }
+    // ship arrow
+    const px=x0+this.ship.x*sc, py=y0+this.ship.y*sc;
+    ctx.save(); ctx.translate(px,py); ctx.rotate(this.ship.angle);
+    ctx.fillStyle="#ffe7a0";
+    ctx.beginPath(); ctx.moveTo(6,0); ctx.lineTo(-4,-4); ctx.lineTo(-4,4); ctx.fill();
+    ctx.restore();
+    ctx.restore();
+    ctx.restore();
+  },
+
+  /* ---------- main loop ---------- */
+  frame(now){
+    let dt=(now-this.last)/1000; this.last=now;
+    if(dt>0.05) dt=0.05;        // clamp big gaps (tab switch)
+    // fps meter
+    this.fpsT+=dt; this.fpsN++;
+    if(this.fpsT>=0.5){ this.fps=Math.round(this.fpsN/this.fpsT); this.fpsN=0; this.fpsT=0; }
+
+    if(this.mode!=="paused" && this.mode!=="title" && this.mode!=="summary") this.update(dt);
+    else { // keep sea breathing on menus, but freeze the world
+      this.time+=dt; this.particles.update(dt); this.screenFx.update(dt);
+    }
+    this.render();
+    requestAnimationFrame(this.frame.bind(this));
+  },
+};
+
+window.Game = Game;
+window.addEventListener("load", ()=> Game.init());
+</script>
+
+<!-- safe-area probe (read by the hardening script below) -->
+<div id="saProbe" style="position:fixed;top:0;left:0;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)"></div>
+
+<script>
+/* ============================================================
+   NATIVE / ANDROID WEBVIEW HARDENING
+   Safe to run in a plain browser too — every hook is guarded.
+   ============================================================ */
+(function(){
+  // default insets so canvas UI never reads undefined
+  if (window.Game && !window.Game.safe) window.Game.safe = {t:0,r:0,b:0,l:0};
+
+  function readInsets(){
+    const p=document.getElementById("saProbe"); if(!p||!window.Game) return;
+    const cs=getComputedStyle(p), n=v=>parseFloat(v)||0;
+    window.Game.safe={ t:n(cs.paddingTop), r:n(cs.paddingRight), b:n(cs.paddingBottom), l:n(cs.paddingLeft) };
+  }
+  window.addEventListener("load", ()=>{ setTimeout(readInsets,60); });
+  window.addEventListener("resize", readInsets);
+  window.addEventListener("orientationchange", ()=> setTimeout(readInsets,200));
+
+  // No long-press context menu anywhere
+  window.addEventListener("contextmenu", e=>e.preventDefault());
+
+  // Auto-save + pause when the app is sent to the background (or closed)
+  function backgroundSave(){
+    const G=window.Game; if(!G||!G.ship) return;
+    try{
+      if(G.mode==="sailing"){ G.pauseGame && G.pauseGame(); }
+      else if(G.saveVoyage){ G.saveVoyage("auto"); }
+    }catch(e){}
+  }
+  document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="hidden") backgroundSave(); });
+  window.addEventListener("pagehide", backgroundSave);
+
+  // Keep the screen awake while playing (best-effort)
+  let wakeLock=null;
+  async function requestWake(){
+    try{ if("wakeLock" in navigator && document.visibilityState==="visible"){ wakeLock=await navigator.wakeLock.request("screen"); } }catch(e){}
+  }
+  document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible") requestWake(); });
+  window.addEventListener("load", ()=> setTimeout(requestWake,300));
+
+  // Android hardware BACK button → behave like a game, not a browser
+  function wireBack(){
+    if(window.Capacitor && Capacitor.Plugins && Capacitor.Plugins.App){
+      Capacitor.Plugins.App.addListener("backButton", ()=>{
+        const G=window.Game; if(!G){ return; }
+        if(G.mode==="paused"){ G.resumeGame && G.resumeGame(); return; }
+        // close any open overlay first
+        let closed=false;
+        ["shop","howto","merchant","echo"].forEach(id=>{
+          const el=G.dom && G.dom[id];
+          if(el && el.classList.contains("show")){ G.hide && G.hide(id); closed=true; }
+        });
+        if(closed) return;
+        if(G.mode==="docking"){ G.leaveDock && G.leaveDock(); return; }
+        if(G.mode==="sailing"){ G.pauseGame && G.pauseGame(); return; }
+      });
+      // also resync insets once Capacitor is ready
+      readInsets();
+    }
+  }
+  window.addEventListener("load", ()=> setTimeout(wireBack,150));
+})();
+</script>
+</body>
+</html>
