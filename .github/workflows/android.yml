@@ -1,0 +1,51 @@
+# Builds an installable DEBUG .apk entirely in the cloud — no local Android tools needed.
+# Push to GitHub, let this run, then download the APK from the run's "Artifacts".
+# (Release .aab signing for the Play Store is a later step — see README.)
+name: Build Android (debug)
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:   # lets you run it manually from the Actions tab
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Set up Java (Temurin 21)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Add the Android platform
+        run: npx cap add android
+
+      - name: Sync web assets into the native project
+        run: npx cap sync android
+
+      - name: Build debug APK
+        run: |
+          chmod +x android/gradlew
+          cd android
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Upload the APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: tides-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
