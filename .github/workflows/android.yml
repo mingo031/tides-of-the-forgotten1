@@ -10,41 +10,36 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 22
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: Setup Java (Temurin 21)
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          packages: 'build-tools;34.0.0 platform-tools platforms;android-34'
+          node-version: 22
 
-      - name: Install npm dependencies
+      - name: Install dependencies
         run: npm install
 
       - name: Add Android platform
         run: npx cap add android || true
 
-      - name: Sync web assets
+      - name: Sync Capacitor
         run: npx cap sync android
 
-      - name: Build Release App Bundle (.aab)
+      - name: Build Release App Bundle
         working-directory: ./android
-        run: ./gradlew bundleRelease --no-daemon
+        run: ./gradlew clean bundleRelease --no-daemon
 
       - name: Upload App Bundle
         uses: actions/upload-artifact@v4
         with:
-          name: Tides-of-the-Forgotten-Release-AAB
+          name: Tides-Release-AAB
           path: android/app/build/outputs/bundle/release/app-release.aab
           retention-days: 7
